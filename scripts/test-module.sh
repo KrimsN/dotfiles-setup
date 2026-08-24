@@ -17,7 +17,7 @@ usage() {
 
 [ $# -ge 2 ] || usage
 
-MODULES="$1"
+MODULES="${1//,/ }"
 DISTRO="$2"
 RUN_TWICE=1
 [ "${3:-}" = "--once" ] && RUN_TWICE=0
@@ -49,6 +49,20 @@ docker run --rm \
   "$IMAGE" \
   bash -c '
     set -e
+    # Официальные минимальные образы (ubuntu:24.04 и др.) не включают
+    # sudo — а install.sh и все модули вызывают команды через sudo
+    # безусловно (так и должно быть на реальной машине под обычным
+    # пользователем). Контейнер уже под root, так что sudo можно
+    # поставить напрямую, без него самого.
+    if ! command -v sudo >/dev/null 2>&1; then
+      if command -v apt-get >/dev/null 2>&1; then
+        apt-get update -y && apt-get install -y sudo
+      elif command -v dnf >/dev/null 2>&1; then
+        dnf install -y sudo
+      elif command -v yum >/dev/null 2>&1; then
+        yum install -y sudo
+      fi
+    fi
     cp -r /repo /tmp/dotfiles-setup
     cd /tmp/dotfiles-setup
     for i in $(seq 1 "$RUNS"); do

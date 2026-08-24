@@ -19,6 +19,10 @@
 
 set -euo pipefail
 
+cli::_dotfiles_dir() {
+  echo "${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+}
+
 cli::install_eza() {
   github_release::install "eza-community/eza" \
     "eza_$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "eza" "eza"
@@ -60,6 +64,24 @@ cli::ensure_symlinks() {
   fi
 }
 
+cli::write_bat_config() {
+  local src dest dest_dir
+  src="$(cli::_dotfiles_dir)/config/bat.conf"
+  dest_dir="$HOME/.config/bat"
+  dest="$dest_dir/config"
+
+  mkdir -p "$dest_dir"
+
+  if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
+    local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
+    echo "cli-tools: существующий $dest отличается — делаю бэкап в $backup"
+    cp "$dest" "$backup"
+  fi
+
+  cp "$src" "$dest"
+  echo "cli-tools: $dest обновлён"
+}
+
 cli::install() {
   cli::install_pkg_group
   cli::ensure_symlinks
@@ -67,6 +89,7 @@ cli::install() {
   cli::install_delta
   cli::install_curlie
   cli::install_zoxide
+  cli::write_bat_config
   echo "cli-tools: готово."
 }
 

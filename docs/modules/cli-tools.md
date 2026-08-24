@@ -31,7 +31,16 @@ jq, httpie, eza, delta, curlie, zoxide). Требует `scripts/lib/os-detect.s
 из modules/aliases.sh реальным бинарником на PATH для использования из
 скриптов, не только интерактивно).
 
+Конфиг bat (`config/bat.conf` → `~/.config/bat/config`): тема
+`TwoDark`, стиль `numbers,changes,header`, `--paging=auto`.
+Разворачивается по тому же паттерну, что и `~/.tmux.conf` в
+modules/tmux.sh — бэкап с таймстампом при отличии от уже существующего
+файла, иначе перезапись.
+
 **Тестирование**: end-to-end (установка + двойной запуск на
 идемпотентность) в Ubuntu 24.04, Fedora 39, CentOS Stream 9 (включая
 EPEL+CRB) — на всех три версии совпали ассеты, скачанные с GitHub.
 Дополнительно проверена установка (без повторного прогона) на Debian 12.
+Конфиг bat дополнительно перепроверен через `scripts/test-module.sh
+base,cli-tools` на Ubuntu 24.04 и Fedora (latest, dnf5) — записывается
+идемпотентно на обоих прогонах.
