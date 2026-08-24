@@ -1,9 +1,9 @@
 # dotfiles-setup
 
 Набор скриптов для быстрой настройки unix-окружения на Ubuntu, Debian,
-Fedora и CentOS: zsh + oh-my-zsh + Powerlevel10k, tmux (+ TPM,
-tmux-resurrect, tmux-continuum), git-экосистема (gh), docker и набор
-CLI-утилит (полный список — в [CLAUDE.md](CLAUDE.md)).
+Fedora и CentOS: zsh + oh-my-zsh + Powerlevel10k (+ Nerd Font-шрифты),
+tmux (+ TPM, tmux-resurrect, tmux-continuum), git-экосистема (gh),
+docker и набор CLI-утилит (полный список — в [CLAUDE.md](CLAUDE.md)).
 
 ## Быстрый старт
 

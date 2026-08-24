@@ -20,7 +20,7 @@ set -euo pipefail
 
 REPO_URL="${DOTFILES_REPO_URL:-https://github.com/KrimsN/dotfiles-setup.git}"
 DEFAULT_INSTALL_DIR="$HOME/.local/share/dotfiles-setup"
-ALL_MODULES=(base zsh tmux aliases cli-tools git-ecosystem docker extras)
+ALL_MODULES=(base zsh tmux aliases cli-tools git-ecosystem docker extras fonts)
 
 for arg in "$@"; do
   case "$arg" in
@@ -169,6 +169,7 @@ install_sh::_run_module() {
     git-ecosystem)  git_eco::install ;;
     docker)         docker::install ;;
     extras)         extras::install ;;
+    fonts)          fonts::install ;;
     *) echo "install: неизвестный модуль '$1', пропускаю" >&2 ;;
   esac
 }
@@ -204,6 +205,8 @@ install_sh::main() {
   source "$repo_dir/modules/docker.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/modules/extras.sh"
+  # shellcheck disable=SC1091
+  source "$repo_dir/modules/fonts.sh"
 
   local modules
   modules="$(install_sh::_selected_modules)"
