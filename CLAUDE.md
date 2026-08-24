@@ -55,7 +55,10 @@ tmux, TPM, tmux-resurrect, tmux-continuum
 docker (docker compose входит в современный docker, отдельно не ставить)
 
 ### Прочее
-tldr, neofetch
+tldr, fastfetch — изначально был выбран neofetch, но проект archived и
+убран из репозиториев Fedora; заменён на fastfetch (активно
+поддерживаемый форк) единообразно на всех дистрибутивах — решение
+пользователя, см. modules/extras.sh.
 
 ### Тема промпта
 Powerlevel10k — обязательна, не опциональна.
@@ -79,9 +82,10 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
 Обвязка готова (git, структура папок, этот файл), список программ и
 плагинов зафиксирован. Из логики установки реализованы модули определения
 ОС, установки zsh-стека, tmux-стека, личных алиасов, CLI-инструментов
-нового поколения, git-экосистемы (gh), docker и базового набора
-пакетов. Остальное (tldr, neofetch, install.sh-лаунчер) ещё не
-написано.
+нового поколения, git-экосистемы (gh), docker, базового набора пакетов
+и "прочего" (tldr, fastfetch). Все модули из списка программ готовы —
+остался только install.sh-лаунчер, объединяющий их в единый
+интерактивный установщик.
 
 ### Реализованные модули
 
@@ -270,6 +274,48 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
   neovim/btop) и Debian 12 — на Debian дополнительно перепроверено, что
   `cli-tools.sh` продолжает работать после рефакторинга EPEL в общую
   библиотеку.
+
+- **`scripts/lib/github-release.sh`** — вынесено из `cli-tools.sh` в
+  общую библиотеку (та же причина, что и с EPEL: понадобилось второй
+  раз, для fastfetch в `extras.sh`). `github_release::install <repo>
+  <asset_regex> <inner_path_glob> <target_name>` — резолвит последний
+  релиз через GitHub API, качает и распаковывает архив, кладёт
+  бинарник в `/usr/local/bin`. `github_release::arch_rust` /
+  `arch_go` — маппинг `uname -m` на нужный стиль именования ассетов
+  (Rust-проекты: x86_64/aarch64; Go/goreleaser: amd64/arm64).
+
+  Важный нюанс: `inner_path_glob` матчится через `find -path
+  "*<glob>"` по полному пути внутри архива, а не только по имени файла
+  (было `-name`) — обнаружено на fastfetch, у которого бинарник
+  `usr/bin/fastfetch` и bash-completion `usr/share/.../fastfetch`
+  называются одинаково, и `-name` с `head -n1` мог случайно подсунуть
+  скрипт-completion вместо бинарника. Для новых вызовов передавать
+  что-то вроде `"usr/bin/tool"`, а не просто `"tool"`, если есть шанс
+  коллизии имён внутри архива.
+
+  `cli-tools.sh` обновлён — использует общую `github_release::install`
+  вместо своей копии; порядок `source` изменился: теперь
+  `scripts/lib/github-release.sh` нужно подключать перед
+  `cli-tools.sh` и `extras.sh`.
+
+- **`modules/extras.sh`** — tldr (через пакетный менеджер, на
+  CentOS/RHEL — через EPEL) и fastfetch (единообразно на всех
+  дистрибутивах через `github_release::install`, т.к. пакета нет в
+  репах Debian/Ubuntu вообще, а в Fedora он и вовсе удалён).
+
+  Ещё один нюанс с fastfetch: у него в GitHub Releases есть ассет
+  `fastfetch-musl-amd64.tar.gz`, но вопреки названию он не статический
+  — реально слинкован с musl libc динамически (`NEEDED
+  libc.musl-x86_64.so.1`), и на glibc-дистрибутивах (все наши целевые)
+  не запускается ("required file not found", нет musl-рантайма).
+  Использован обычный `fastfetch-linux-<arch>.tar.gz` (glibc-сборка)
+  вместо него — работает везде. В отличие от eza/delta/zoxide, где
+  musl-ассеты — честный статик (там всё ок, проверено).
+
+  Требует `scripts/lib/os-detect.sh`, `scripts/lib/epel.sh`,
+  `scripts/lib/github-release.sh`. Протестирован end-to-end (установка
+  + идемпотентность) на Ubuntu 24.04, Fedora (актуальная), CentOS
+  Stream 9 (подтверждена ветка EPEL для tldr).
 
 ## Архитектурные принципы (для будущей реализации)
 

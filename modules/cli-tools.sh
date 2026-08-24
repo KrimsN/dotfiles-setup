@@ -2,8 +2,9 @@
 # Установка CLI-инструментов нового поколения:
 # ripgrep, fd, fzf, bat, eza, zoxide, delta, jq, httpie, curlie.
 # Не запускать напрямую — подключать через `source` после
-# scripts/lib/os-detect.sh и scripts/lib/epel.sh (нужны OS_FAMILY,
-# os::pkg_install, epel::ensure).
+# scripts/lib/os-detect.sh, scripts/lib/epel.sh и
+# scripts/lib/github-release.sh (нужны OS_FAMILY, os::pkg_install,
+# epel::ensure, github_release::install).
 #
 # Публичная точка входа: cli::install
 #
@@ -18,81 +19,24 @@
 
 set -euo pipefail
 
-cli::_arch_rust() {
-  case "$(uname -m)" in
-    x86_64) echo x86_64 ;;
-    aarch64|arm64) echo aarch64 ;;
-    *) uname -m ;;
-  esac
-}
-
-cli::_arch_go() {
-  case "$(uname -m)" in
-    x86_64) echo amd64 ;;
-    aarch64|arm64) echo arm64 ;;
-    *) uname -m ;;
-  esac
-}
-
-# cli::_github_install <repo> <asset_regex> <inner_binary_glob> <target_name>
-# Скачивает последний релиз с GitHub, ищет ассет по regex, распаковывает
-# и кладёт найденный бинарник в /usr/local/bin/<target_name>.
-cli::_github_install() {
-  local repo="$1" asset_regex="$2" inner_glob="$3" target_name="$4"
-
-  if command -v "$target_name" >/dev/null 2>&1; then
-    echo "cli-tools: $target_name уже установлен, пропускаю"
-    return 0
-  fi
-
-  local url
-  url="$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" \
-    | grep -oE '"browser_download_url":[[:space:]]*"[^"]+"' \
-    | cut -d'"' -f4 \
-    | grep -E "$asset_regex" | head -n1)"
-
-  if [ -z "$url" ]; then
-    echo "cli-tools: не удалось найти релиз для $target_name (repo=$repo, pattern=$asset_regex)" >&2
-    return 1
-  fi
-
-  local tmp
-  tmp="$(mktemp -d)"
-  echo "cli-tools: скачиваю $target_name: $url"
-  curl -fsSL "$url" -o "$tmp/asset.tar.gz"
-  tar -xzf "$tmp/asset.tar.gz" -C "$tmp"
-
-  local bin_path
-  bin_path="$(find "$tmp" -type f -name "$inner_glob" | head -n1)"
-  if [ -z "$bin_path" ]; then
-    echo "cli-tools: бинарник '$inner_glob' не найден в архиве $target_name" >&2
-    rm -rf "$tmp"
-    return 1
-  fi
-
-  sudo install -m 0755 "$bin_path" "/usr/local/bin/$target_name"
-  rm -rf "$tmp"
-  echo "cli-tools: $target_name установлен в /usr/local/bin/$target_name"
-}
-
 cli::install_eza() {
-  cli::_github_install "eza-community/eza" \
-    "eza_$(cli::_arch_rust)-unknown-linux-musl\.tar\.gz$" "eza" "eza"
+  github_release::install "eza-community/eza" \
+    "eza_$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "eza" "eza"
 }
 
 cli::install_delta() {
-  cli::_github_install "dandavison/delta" \
-    "delta-.*-$(cli::_arch_rust)-unknown-linux-musl\.tar\.gz$" "delta" "delta"
+  github_release::install "dandavison/delta" \
+    "delta-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "delta" "delta"
 }
 
 cli::install_curlie() {
-  cli::_github_install "rs/curlie" \
-    "curlie_.*_linux_$(cli::_arch_go)\.tar\.gz$" "curlie" "curlie"
+  github_release::install "rs/curlie" \
+    "curlie_.*_linux_$(github_release::arch_go)\.tar\.gz$" "curlie" "curlie"
 }
 
 cli::install_zoxide() {
-  cli::_github_install "ajeetdsouza/zoxide" \
-    "zoxide-.*-$(cli::_arch_rust)-unknown-linux-musl\.tar\.gz$" "zoxide" "zoxide"
+  github_release::install "ajeetdsouza/zoxide" \
+    "zoxide-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "zoxide" "zoxide"
 }
 
 cli::install_pkg_group() {
