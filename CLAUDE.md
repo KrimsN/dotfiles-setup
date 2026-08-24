@@ -25,8 +25,8 @@
 git, curl, wget, vim, neovim, htop, btop, tree, unzip, zip
 
 ### CLI-инструменты нового поколения
-ripgrep (rg), fd, fzf, bat, eza, zoxide, delta (или diff-so-fancy — выбрать
-один), jq, httpie (или curlie — выбрать один)
+ripgrep (rg), fd, fzf, bat, eza, zoxide, delta, jq, httpie (или curlie —
+выбрать один)
 
 ### Git-экосистема
 gh (уже используется в этом репо), git-delta (см. выше, не дублировать
@@ -54,8 +54,7 @@ history-substring-search, docker, docker-compose
 
 Внешние (устанавливаются отдельно, клонируются в
 `$ZSH_CUSTOM/plugins/`):
-zsh-autosuggestions, zsh-syntax-highlighting (или fast-syntax-highlighting —
-выбрать один вариант при реализации, не ставить оба), zsh-completions
+zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
 
 Примечание: zoxide ставится как отдельная программа (см. CLI-инструменты) и
 подключает себя сам — отдельный oh-my-zsh плагин `z` не нужен, дублирования
