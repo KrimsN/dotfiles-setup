@@ -39,7 +39,7 @@
 ### Базовый набор
 git, curl, wget, vim, neovim, htop, btop, tree, unzip, zip, diffutils
 — neovim ставится не пакетом, а свежим бинарником с GitHub Releases +
-конфиг + lazy.nvim, см. "### Neovim" ниже и modules/nvim.sh.
+конфиг + lazy.nvim, см. modules/nvim.sh и [docs/modules/nvim.md](docs/modules/nvim.md).
 
 ### CLI-инструменты нового поколения
 ripgrep (rg), fd, fzf, bat, eza, zoxide, delta, jq, httpie, curlie
@@ -95,396 +95,34 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
 ## Статус
 
 Проект функционально завершён: все модули из списка программ написаны
-и протестированы (10 модулей в ALL_MODULES, включая nvim —
-modules/nvim.sh; плюс опциональный zsh-terminal-app вне ALL_MODULES),
-есть единый лаунчер `install.sh`, работающий как через `curl | bash`
-на чистой машине (без git/curl), так и из склонированного
-репозитория.
+и протестированы (10 модулей в ALL_MODULES, включая nvim; плюс
+опциональный zsh-terminal-app вне ALL_MODULES), есть единый лаунчер
+`install.sh`, работающий как через `curl | bash` на чистой машине (без
+git/curl), так и из склонированного репозитория.
 
 ### Реализованные модули
 
-- **`scripts/lib/os-detect.sh`** — определяет `OS_ID`, `OS_VERSION_ID`,
-  `OS_FAMILY` (debian|rhel) и `PKG_MANAGER` (apt|dnf|yum) через
-  `/etc/os-release` + наличие бинарника dnf/yum. Даёт обёртки
-  `os::pkg_update` и `os::pkg_install`. Подключается через `source`,
-  при прямом запуске печатает результат детекции для отладки.
-  Протестирован в контейнерах/WSL: Ubuntu 24.04, Debian 12, Fedora 39,
-  CentOS Stream 9 (dnf) и CentOS 7 (yum-fallback); неподдерживаемый
-  дистрибутив (проверено на Alpine) даёт понятную ошибку и код возврата 1.
+Детали реализации, реальные баги, найденные при тестировании, и покрытие
+тестами — по одному файлу на модуль в `docs/modules/`:
 
-- **`modules/zsh.sh`** — устанавливает zsh (через `os::pkg_install`),
-  oh-my-zsh (неинтерактивно: `RUNZSH=no CHSH=no`), Powerlevel10k и три
-  внешних плагина (zsh-autosuggestions, fast-syntax-highlighting,
-  zsh-completions) через `git clone --depth=1` в `$ZSH_CUSTOM`, пишет
-  `~/.zshrc` из `config/zshrc` (с бэкапом старого файла при отличии —
-  сравнение через `cmp`; т.к. `diffutils` не всегда стоит в минимальных
-  образах, модуль сам ставит его перед сравнением через
-  `os::pkg_install diffutils`, идемпотентно) и опционально делает zsh
-  login-shell'ом по
-  умолчанию через `chsh` — вопрос задаётся через `/dev/tty`
-  (`zsh::_want_default_shell`) по схеме из "Механизм конфигурации",
-  с env-override `ZSH_DEFAULT_SHELL=yes|no` и безопасным дефолтом "no"
-  без интерактива. Требует зависимость `scripts/lib/os-detect.sh`
-  (использует `os::pkg_install`) — подключать оба через `source` в этом
-  порядке. Идемпотентен: повторный запуск ничего не переустанавливает и
-  не трогает уже применённый login-shell (проверка через
-  `getent passwd`, а не `$SHELL`, т.к. переменная не обновляется до
-  перелогина).
-  Протестирован end-to-end в контейнерах Ubuntu 24.04 и Fedora 39,
-  включая двойной запуск для проверки идемпотентности.
-
-- **`scripts/lib/rcfile.sh`** — общая утилита `rcfile::upsert_block
-  <file> <marker> <content>`: идемпотентно вставляет/обновляет
-  маркированный блок (`# >>> dotfiles-setup:<marker> >>>` /
-  `# <<< ... <<<`) в rc-файле, не трогая остальное содержимое. Нужна
-  для файлов, которыми управляем частично (например `~/.bashrc`), в
-  отличие от `~/.zshrc`, который zsh.sh пишет целиком из шаблона.
-
-- **`modules/tmux.sh`** — устанавливает tmux (`os::pkg_install`), TPM
-  (git clone в `~/.tmux/plugins/tpm`), пишет `~/.tmux.conf` из
-  `config/tmux.conf` (та же схема бэкапа через `cmp`, что и у zsh.sh),
-  ставит плагины `tmux-resurrect` и `tmux-continuum` через headless
-  `tpm/bin/install_plugins` — для этого нужен хотя бы один запущенный
-  tmux-сервер с загруженным конфигом (иначе TPM не знает свой путь),
-  поэтому модуль поднимает временную detached-сессию
-  `_dotfiles_tpm_bootstrap`, ждёт секунду (строка `run -b` в
-  tmux.conf асинхронна) и закрывает её после установки плагинов.
-  Требует `scripts/lib/os-detect.sh` и `scripts/lib/rcfile.sh`
-  (`source` перед этим модулем).
-
-  **Содержимое `config/tmux.conf`** (дополнено 2026-08-24, помимо
-  `mouse on`, который был с самого начала): `history-limit 50000`,
-  `escape-time 0` (без задержки после Esc — важно для vim/nvim внутри
-  tmux), `renumber-windows on`, `focus-events on`,
-  `default-terminal 'tmux-256color'` + `terminal-overrides` для
-  true-color; удобные сплиты `|`/`-` (сохраняют `pane_current_path`,
-  заменяют дефолтные `%`/`"`), `prefix + r` — reload конфига без
-  выхода из tmux; кастомный status-bar (имя сессии, список окон,
-  дата/время, hostname) вместо дефолтного минималистичного. Vi-style
-  keys в copy-mode осознанно не добавлены — пользователь их не
-  запрашивал.
-
-  **Поведение по умолчанию (зафиксировано пользователем):** голый
-  `tmux` без аргументов подключается к уже существующей сессии, если
-  она есть, иначе создаёт новую; с явными аргументами (`tmux new -s
-  foo` и т.п.) ведёт себя как обычно. Реализовано shell-функцией в
-  `config/tmux-autoattach.sh`, которая ставится в
-  `~/.config/dotfiles-setup/tmux-autoattach.sh` и подключается из
-  `~/.zshrc` (условная строка уже зашита в `config/zshrc` — работает
-  независимо от порядка запуска zsh.sh/tmux.sh) и из `~/.bashrc` через
-  `rcfile::upsert_block` (т.к. `.bashrc` не управляется целиком).
-
-  Протестирован end-to-end в контейнере Ubuntu 24.04: установка,
-  двойной запуск (идемпотентность — TPM/пакет не переустанавливаются,
-  `.bashrc`-блок не дублируется), и поведенческая проверка под
-  реальным pty (`script`) — bare `tmux` подключается к существующей
-  сессии вместо создания новой, а `tmux new -s <name>` по-прежнему
-  создаёт отдельную сессию.
-
-- **`modules/nvim.sh`** — конфиг Neovim: `~/.config/nvim/init.lua` из
-  `config/nvim/init.lua` (та же схема бэкапа через `cmp`, что и у
-  zsh/tmux) + lazy.nvim (менеджер плагинов, bootstrap в самом
-  init.lua через `git clone`) + базовый набор плагинов: nvim-tree
-  (дерево файлов, `<leader>e`), lualine (статус-бар), telescope+plenary
-  (нечёткий поиск, `<leader>ff/fg/fb`), nvim-treesitter (подсветка на
-  основе AST), tokyonight (цветовая схема). LSP и автодополнение
-  сознательно не включены — отдельный, более тяжёлый шаг
-  (nvim-lspconfig + mason), не входит в текущий базовый уровень.
-
-  **Бинарник ставится с GitHub Releases, а не из пакетного менеджера**
-  (`nvim::install_package` в модуле, не `os::pkg_install`) — решение
-  пользователя. Причина: neovim в репозиториях Ubuntu/Debian сильно
-  устаревший (0.9.5), там ещё нет `vim.uv` (появился в 0.10), от
-  которого зависит bootstrap lazy.nvim. По той же причине это не
-  `github_release::install` из `scripts/lib/github-release.sh` (тот
-  рассчитан на самодостаточный статический бинарник вроде
-  eza/delta/curlie) — релизный архив neovim это дерево
-  `bin/+lib/+share/` (бинарнику в рантайме нужны файлы из
-  `share/nvim/runtime`), распаковывается целиком поверх `/usr/local`.
-  Т.к. свежий neovim теперь ставит этот модуль, `neovim` убран из
-  пакетного списка `modules/base.sh` (дублирования не делаем, тот же
-  принцип, что и с `git-delta`/`gh` в других модулях).
-
-  **`nvim::install_plugins` ставит `gcc` перед `Lazy! sync`** —
-  реальный баг, пойманный при тестировании: nvim-treesitter
-  компилирует парсеры через `:TSUpdate`, без C-компилятора сборка
-  падает с "No C compiler found". Также nvim-treesitter в конфиге
-  закреплён на `branch = 'master'` (не `main`) — ещё один реальный баг
-  при тестировании: `main` это переписанный в 2025 новый мажор без
-  `require('nvim-treesitter.configs').setup()`, с другим API;
-  `master` — поддерживаемая legacy-ветка со старым простым API,
-  которым и пользуется конфиг.
-
-  Требует `scripts/lib/os-detect.sh` (`os::pkg_install` для
-  `diffutils`/`gcc`). Протестирован end-to-end в контейнере
-  Ubuntu 24.04: установка с нуля (включая скачивание бинарника и
-  headless-синхронизацию всех плагинов без ошибок), идемпотентность
-  (повторный запуск), бэкап конфига при локальном отличии, и полный
-  прогон через `install.sh` (`DOTFILES_MODULES=nvim`).
-
-- **`modules/aliases.sh`** — личные алиасы пользователя (зафиксировано
-  пользователем, список может пополняться — новые добавлять в
-  `config/aliases.sh`):
-  - `cat` → `bat`/`batcat` (алиас определяет, какой бинарник реально
-    стоит: на Debian/Ubuntu пакет `bat` ставит бинарник как `batcat`
-    из-за конфликта имён с другим пакетом, на Fedora/CentOS — как
-    `bat`). Условный — не ломается, если ни один бинарник ещё не
-    установлен (модуль CLI-инструментов, который поставит `bat`, ещё
-    не реализован).
-  - `cs <dir>` — функция `cd + ls` одной командой, без аргумента — в
-    `$HOME`.
-
-  Не ставит никаких пакетов, только сам механизм подключения — тот же
-  паттерн, что у tmux-хука: снипет в
-  `~/.config/dotfiles-setup/aliases.sh`, подключается из `~/.zshrc`
-  (статичная условная строка в `config/zshrc`) и `~/.bashrc` (через
-  `rcfile::upsert_block`). Требует `scripts/lib/rcfile.sh`.
-
-  Протестирован в контейнерах Ubuntu 24.04 (`batcat`) и Fedora 39
-  (`bat`) под реальным интерактивным bash (`bash -ic`) — важно: обычный
-  `source ~/.bashrc` в неинтерактивном тестовом скрипте не подходит,
-  т.к. дефолтный `.bashrc` обрывается в начале файла для
-  неинтерактивных шеллов (`case $- in *i*) ;; *) return;; esac`) —
-  учитывать это при написании тестов для будущих модулей.
-
-- **`modules/cli-tools.sh`** — ставит все 10 CLI-инструментов нового
-  поколения (ripgrep, fd, fzf, bat, jq, httpie, eza, delta, curlie,
-  zoxide). Требует `scripts/lib/os-detect.sh`.
-
-  Две стратегии установки в одном модуле:
-  - **Через пакетный менеджер** (ripgrep, fd-find, fzf, bat, jq,
-    httpie): для rhel-семейства сначала включается EPEL
-    (`epel-release`) и, если доступна команда `crb`, репозиторий CRB
-    (CodeReady Builder) — часть пакетов EPEL на CentOS Stream 9 (в
-    частности httpie) требует зависимостей оттуда, без CRB установка
-    падает с "conflicting requests". Обе операции best-effort
-    (не валят весь модуль, если недоступны — актуально для Fedora, где
-    EPEL не нужен и `crb` не существует).
-  - **Бинарником с GitHub Releases** (eza, delta/git-delta, curlie,
-    zoxide) — единообразно для всех дистрибутивов, т.к. этих пакетов
-    нет (или нет везде/во всех актуальных версиях) в стандартных
-    репозиториях, особенно на CentOS. Скачивается musl-статик под
-    архитектуру (`uname -m`, определяется через `cli::_arch_rust`
-    x86_64/aarch64 или `cli::_arch_go` amd64/arm64 — у curlie
-    goreleaser-стиль именования ассетов, у остальных трёх —
-    Rust-стиль), URL резолвится через GitHub API
-    (`/repos/<repo>/releases/latest`), бинарник кладётся в
-    `/usr/local/bin`. Идемпотентно: пропускает скачивание, если
-    команда с таким именем уже есть в PATH.
-
-  `fd-find` и `bat` на Debian/Ubuntu ставят бинарники как `fdfind` и
-  `batcat` (конфликт имён с другими пакетами существующими в системе) —
-  модуль сам создаёт симлинки `/usr/local/bin/fd`/`bat` на них, если
-  канонического имени ещё нет в PATH (дополняет alias `cat`→`bat`/
-  `batcat` из modules/aliases.sh реальным бинарником на PATH для
-  использования из скриптов, не только интерактивно).
-
-  Протестирован end-to-end (установка + двойной запуск на
-  идемпотентность) в Ubuntu 24.04, Fedora 39, CentOS Stream 9
-  (включая EPEL+CRB) — на всех три версии совпали ассеты, скачанные
-  с GitHub. Дополнительно проверена установка (без повторного прогона)
-  на Debian 12.
-
-- **`modules/git-ecosystem.sh`** — ставит `gh` (git-delta уже ставится
-  модулем `modules/cli-tools.sh`, здесь не дублируется). У gh нет
-  пакета в стандартных репах — свой репозиторий на `cli.github.com`,
-  метод подключения различается по `OS_FAMILY`: apt-keyring +
-  sources.list для debian, `dnf/yum-config-manager --add-repo` для
-  rhel (dnf и yum — два разных набора команд). Идемпотентен (пропускает
-  всё, если `gh` уже в PATH). Требует `scripts/lib/os-detect.sh`.
-  Протестирован на Ubuntu 24.04, Fedora 39, CentOS Stream 9 (обе ветки
-  — apt и dnf; yum-ветка для CentOS 7 не тестировалась вживую, но
-  синтаксически проверена).
-
-- **`modules/docker.sh`** — ставит Docker Engine + `docker compose`
-  плагин через официальный скрипт `get.docker.com` (сам определяет
-  дистрибутив, поддерживает все 4 целевых); отдельно `docker-compose`
-  не ставится, как и зафиксировано в списке программ. После установки
-  пытается `systemctl enable --now docker` — best-effort, не валит
-  модуль, если systemd недоступен (актуально в контейнерах/некоторых
-  WSL-конфигурациях, там `systemctl` есть, но не функционирует без
-  PID 1 = systemd; на реальной машине с systemd отработает штатно).
-
-  **Добавление пользователя в группу `docker`** (запуск без `sudo`) —
-  зафиксировано пользователем как решение "спрашивать": та же схема,
-  что у выбора shell'а в zsh.sh — вопрос через `/dev/tty`
-  (`docker::_want_user_in_group`), env-override
-  `DOCKER_ADD_USER_TO_GROUP=yes|no`, безопасный дефолт "no" без
-  интерактива (группа `docker` по факту эквивалентна root).
-
-  Протестирован end-to-end на Ubuntu 24.04, Fedora (актуальная версия —
-  на Fedora 39 упал из-за того, что сам скрипт Docker считает её EOL и
-  не находит один из пакетов для неё; это ограничение
-  апстрим-скрипта/образа, не модуля), CentOS Stream 9: установка,
-  идемпотентность, добавление в группу по флагу и корректный пропуск
-  без флага/tty (безопасный дефолт).
-
-- **`scripts/lib/epel.sh`** — вынесено из `cli-tools.sh` в общую
-  библиотеку (принцип "не дублировать логику", CLAUDE.md), т.к.
-  понадобилось второй раз в `base.sh`. `epel::ensure`: на rhel-семействе
-  ставит `epel-release` и, если доступна команда `crb`, включает
-  репозиторий CRB (нужен части пакетов EPEL). Best-effort — не валит
-  вызывающий модуль, если что-то не удалось (не rhel, EPEL уже включён,
-  сеть недоступна и т.п.). `cli-tools.sh` обновлён — теперь использует
-  общую `epel::ensure` вместо своей копии; порядок `source` изменился:
-  теперь `scripts/lib/epel.sh` нужно подключать перед `cli-tools.sh` и
-  `base.sh`.
-
-- **`modules/base.sh`** — базовый набор: git, curl, wget, vim,
-  htop, btop, tree, unzip, zip, diffutils — одним вызовом
-  `os::pkg_install` после `epel::ensure` (btop на CentOS живёт
-  только в EPEL, остальное — в базовых репах везде). `neovim` в этот
-  список больше не входит (был здесь изначально) — свежий бинарник
-  теперь ставит отдельный `modules/nvim.sh` с GitHub Releases, см.
-  ниже, пакетную версию не дублируем. Требует
-  `scripts/lib/os-detect.sh` и `scripts/lib/epel.sh`.
-
-  Протестирован end-to-end на Ubuntu 24.04 (включая идемпотентность),
-  Fedora (актуальная), CentOS Stream 9 (подтверждён путь через EPEL для
-  btop) и Debian 12 — на Debian дополнительно перепроверено, что
-  `cli-tools.sh` продолжает работать после рефакторинга EPEL в общую
-  библиотеку.
-
-- **`scripts/lib/github-release.sh`** — вынесено из `cli-tools.sh` в
-  общую библиотеку (та же причина, что и с EPEL: понадобилось второй
-  раз, для fastfetch в `extras.sh`). `github_release::install <repo>
-  <asset_regex> <inner_path_glob> <target_name>` — резолвит последний
-  релиз через GitHub API, качает и распаковывает архив, кладёт
-  бинарник в `/usr/local/bin`. `github_release::arch_rust` /
-  `arch_go` — маппинг `uname -m` на нужный стиль именования ассетов
-  (Rust-проекты: x86_64/aarch64; Go/goreleaser: amd64/arm64).
-
-  Важный нюанс: `inner_path_glob` матчится через `find -path
-  "*<glob>"` по полному пути внутри архива, а не только по имени файла
-  (было `-name`) — обнаружено на fastfetch, у которого бинарник
-  `usr/bin/fastfetch` и bash-completion `usr/share/.../fastfetch`
-  называются одинаково, и `-name` с `head -n1` мог случайно подсунуть
-  скрипт-completion вместо бинарника. Для новых вызовов передавать
-  что-то вроде `"usr/bin/tool"`, а не просто `"tool"`, если есть шанс
-  коллизии имён внутри архива.
-
-  `cli-tools.sh` обновлён — использует общую `github_release::install`
-  вместо своей копии; порядок `source` изменился: теперь
-  `scripts/lib/github-release.sh` нужно подключать перед
-  `cli-tools.sh` и `extras.sh`.
-
-- **`modules/extras.sh`** — tldr (через пакетный менеджер, на
-  CentOS/RHEL — через EPEL) и fastfetch (единообразно на всех
-  дистрибутивах через `github_release::install`, т.к. пакета нет в
-  репах Debian/Ubuntu вообще, а в Fedora он и вовсе удалён).
-
-  Ещё один нюанс с fastfetch: у него в GitHub Releases есть ассет
-  `fastfetch-musl-amd64.tar.gz`, но вопреки названию он не статический
-  — реально слинкован с musl libc динамически (`NEEDED
-  libc.musl-x86_64.so.1`), и на glibc-дистрибутивах (все наши целевые)
-  не запускается ("required file not found", нет musl-рантайма).
-  Использован обычный `fastfetch-linux-<arch>.tar.gz` (glibc-сборка)
-  вместо него — работает везде. В отличие от eza/delta/zoxide, где
-  musl-ассеты — честный статик (там всё ок, проверено).
-
-  Требует `scripts/lib/os-detect.sh`, `scripts/lib/epel.sh`,
-  `scripts/lib/github-release.sh`. Протестирован end-to-end (установка
-  + идемпотентность) на Ubuntu 24.04, Fedora (актуальная), CentOS
-  Stream 9 (подтверждена ветка EPEL для tldr).
-
-- **`install.sh`** (корень репозитория) — единая точка входа, связывает
-  все модули. Два режима запуска:
-  - **`curl | bash`** — у скрипта нет собственного пути на диске
-    (stdin), поэтому сначала бутстрапит `git`/`curl` напрямую через
-    пакетный менеджер (единственное намеренное дублирование логики
-    определения дистрибутива в проекте — `scripts/lib/os-detect.sh`
-    ещё не скачан, использовать неоткуда), затем клонирует репозиторий
-    в `~/.local/share/dotfiles-setup` (переопределяется
-    `DOTFILES_DIR`) и подключает все `scripts/lib/*` и `modules/*` из
-    свежего клона.
-  - **`./install.sh` из уже склонированного репозитория** — определяет
-    это по наличию `modules/` рядом с `${BASH_SOURCE[0]}`, клонирование
-    не требуется.
-
-  Интерактивное меню (схема из "Механизм конфигурации"): вопрос "всё
-  или выбрать вручную" через `/dev/tty`, при выборе вручную — по
-  вопросу на каждый модуль. `--yes`/`NONINTERACTIVE=1` пропускают меню
-  (ставится всё). `DOTFILES_MODULES="base zsh ..."` задаёт список
-  модулей без интерактива вообще (для автоматизации/CI) — сами модули
-  внутри себя независимо читают свои собственные env-переопределения
-  (`ZSH_DEFAULT_SHELL`, `DOCKER_ADD_USER_TO_GROUP`), install.sh их не
-  трогает и не дублирует.
-
-  При тестировании поймал и починил два реальных бага (не тестового
-  окружения):
-  - вывод `apt-get`/`dnf install` внутри бутстрапа не был
-    перенаправлен в stderr, а функция клонирования репозитория
-    вызывается через `$(...)` — весь этот вывод утекал в переменную с
-    путём к репозиторию, ломая `source` дальше ("File name too long").
-    Исправлено оборачиванием в `{ ... } >&2`.
-  - на CentOS Stream `dnf install curl` конфликтует с предустановленным
-    `curl-minimal` без `--allowerasing` — без флага падала вся
-    транзакция бутстрапа (git тоже не ставился).
-
-  Протестировано end-to-end: холодный `curl | bash` без
-  предустановленных git/curl на Ubuntu 24.04, Fedora (актуальная) и
-  CentOS Stream 9 (все три реально бутстрапили git/curl с нуля), плюс
-  полный прогон всех 8 модулей (26 инструментов) одной командой на
-  Ubuntu 24.04 — все проверены на PATH.
-
-- **`modules/fonts.sh`** — Nerd Font-шрифты для Powerlevel10k:
-  JetBrainsMono Nerd Font, FiraCode Nerd Font (зафиксировано
-  пользователем). Качает zip-архивы конкретных шрифтов из
-  `ryanoasis/nerd-fonts` (последний релиз через GitHub API — те же
-  шрифты используются десятками проектов, зеркалирование не нужно),
-  распаковывает в `~/.local/share/fonts/<Font>NerdFont`, чистит всё
-  кроме `.ttf`/`.otf` (в архиве ещё README/LICENSE), обновляет кэш
-  `fc-cache -f`. Идемпотентен: пропускает шрифт, если целевая папка уже
-  не пуста. Требует `scripts/lib/os-detect.sh` (`os::pkg_install
-  unzip fontconfig` — на некоторых минимальных образах их нет из
-  коробки).
-
-  **Важное ограничение, явно проговорено с пользователем**: этот
-  модуль ставит только файлы шрифта на диск — этого достаточно, чтобы
-  шрифт стал виден системе (`fc-list` его находит). Но выбор именно
-  этого шрифта в настройках конкретного терминального эмулятора
-  (GNOME Terminal/Konsole/iTerm2/Windows Terminal/...) остаётся ручным
-  шагом — у каждого терминала свой формат конфига, единого способа
-  автоматизировать это нет.
-
-  Добавлен в `install.sh` как 9-й модуль (`ALL_MODULES`, dispatch,
-  source). Протестирован end-to-end (установка + идемпотентность,
-  `fc-list` подтверждает оба шрифта) на Ubuntu 24.04 и Fedora
-  (актуальная), плюс прогон через сам `install.sh`
-  (`DOTFILES_MODULES=fonts`).
-
-- **`modules/zsh-terminal-app.sh`** — отдельный опциональный модуль
-  (зафиксировано пользователем): создаёт `.desktop`-приложение
-  "терминал сразу в zsh" и, только в GNOME, перевешивает глобальный
-  хоткей Ctrl+T на его запуск. Смысл — если zsh поставлен модулем
-  `zsh.sh`, но пользователь ответил "нет" на смену login-shell'а по
-  умолчанию (`ZSH_DEFAULT_SHELL=no`), даёт быстрый доступ к zsh без
-  `chsh`.
-
-  **Не входит в `ALL_MODULES`** в `install.sh` и поэтому не
-  предлагается ни в общей установке ("всё"), ни в интерактивном меню
-  ручного выбора — запускается только явно:
-  `DOTFILES_MODULES=zsh-terminal-app ./install.sh`. Решение
-  пользователя: этот модуль — по запросу, а не часть стандартного
-  флоу.
-
-  Терминальный эмулятор определяется автоматически: сначала `$TERMINAL`
-  (если задан и существует), иначе перебор известных по приоритету
-  (gnome-terminal, konsole, xfce4-terminal, tilix, alacritty, kitty,
-  xterm) — синтаксис передачи команды у них разный (`--` у
-  gnome-terminal/tilix, `-e` у остальных), учтено отдельной функцией.
-  Модуль идемпотентен: пропускается, если zsh уже login-shell по
-  умолчанию (сравнение через `getent passwd`, как в `zsh.sh`), и не
-  создаёт дублирующий хоткей при повторном запуске (поиск по команде
-  среди существующих `customN`-слотов).
-
-  Переназначение Ctrl+T реализовано через `gsettings` и relocatable
-  schema `org.gnome.settings-daemon.plugins.media-keys.custom-keybinding`
-  — работает только в GNOME, определяется по `$XDG_CURRENT_DESKTOP`.
-  Для остальных DE (KDE и т.п.) единого механизма нет — модуль
-  best-effort печатает готовую команду и просит настроить хоткей
-  вручную в настройках DE (тот же принцип, что и с выбором шрифта в
-  терминальном эмуляторе, см. `modules/fonts.sh`).
+| Модуль | Заметки |
+|---|---|
+| `scripts/lib/os-detect.sh` | [docs/modules/os-detect.md](docs/modules/os-detect.md) |
+| `modules/zsh.sh` | [docs/modules/zsh.md](docs/modules/zsh.md) |
+| `scripts/lib/rcfile.sh` | [docs/modules/rcfile.md](docs/modules/rcfile.md) |
+| `modules/tmux.sh` | [docs/modules/tmux.md](docs/modules/tmux.md) |
+| `modules/nvim.sh` | [docs/modules/nvim.md](docs/modules/nvim.md) |
+| `modules/aliases.sh` | [docs/modules/aliases.md](docs/modules/aliases.md) |
+| `modules/cli-tools.sh` | [docs/modules/cli-tools.md](docs/modules/cli-tools.md) |
+| `modules/git-ecosystem.sh` | [docs/modules/git-ecosystem.md](docs/modules/git-ecosystem.md) |
+| `modules/docker.sh` | [docs/modules/docker.md](docs/modules/docker.md) |
+| `scripts/lib/epel.sh` | [docs/modules/epel.md](docs/modules/epel.md) |
+| `modules/base.sh` | [docs/modules/base.md](docs/modules/base.md) |
+| `scripts/lib/github-release.sh` | [docs/modules/github-release.md](docs/modules/github-release.md) |
+| `modules/extras.sh` | [docs/modules/extras.md](docs/modules/extras.md) |
+| `install.sh` | [docs/modules/install.md](docs/modules/install.md) |
+| `modules/fonts.sh` | [docs/modules/fonts.md](docs/modules/fonts.md) |
+| `modules/zsh-terminal-app.sh` (опциональный, вне ALL_MODULES) | [docs/modules/zsh-terminal-app.md](docs/modules/zsh-terminal-app.md) |
 
 ## Архитектурные принципы (для будущей реализации)
 
@@ -503,4 +141,10 @@ modules/nvim.sh; плюс опциональный zsh-terminal-app вне ALL_M
   детали (список программ, механизм конфигурации, поведение по умолчанию
   для смены shell и т.п.), а не додумывать самостоятельно.
 - Каждый добавляемый скрипт должен быть протестирован хотя бы в одном
-  контейнере целевого дистрибутива, если есть возможность.
+  контейнере целевого дистрибутива, если есть возможность — тестируй через
+  `.claude/skills/test-module/` (см. SKILL.md) вместо разового ad hoc
+  прогона, чтобы шаги тестирования переиспользовались между сессиями.
+- Новый модуль документируется отдельным файлом в `docs/modules/`
+  (что делает, реальные баги, найденные при тестировании, покрытие
+  тестами), а не инлайном в этом файле — см. существующие файлы как
+  образец.
