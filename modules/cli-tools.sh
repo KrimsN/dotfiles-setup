@@ -31,42 +31,42 @@ cli::_dotfiles_dir() {
 
 cli::install_eza() {
   github_release::install "eza-community/eza" \
-    "eza_$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "eza" "eza"
+    "eza_$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "/eza" "eza"
 }
 
 cli::install_delta() {
   github_release::install "dandavison/delta" \
-    "delta-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "delta" "delta"
+    "delta-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "/delta" "delta"
 }
 
 cli::install_curlie() {
   github_release::install "rs/curlie" \
-    "curlie_.*_linux_$(github_release::arch_go)\.tar\.gz$" "curlie" "curlie"
+    "curlie_.*_linux_$(github_release::arch_go)\.tar\.gz$" "/curlie" "curlie"
 }
 
 cli::install_zoxide() {
   github_release::install "ajeetdsouza/zoxide" \
-    "zoxide-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "zoxide" "zoxide"
+    "zoxide-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "/zoxide" "zoxide"
 }
 
 cli::fallback_ripgrep() {
   github_release::install "BurntSushi/ripgrep" \
-    "ripgrep-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "rg" "rg"
+    "ripgrep-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "/rg" "rg"
 }
 
 cli::fallback_fd() {
   github_release::install "sharkdp/fd" \
-    "fd-v.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "fd" "fd"
+    "fd-v.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "/fd" "fd"
 }
 
 cli::fallback_fzf() {
   github_release::install "junegunn/fzf" \
-    "fzf-.*-linux_$(github_release::arch_go)\.tar\.gz$" "fzf" "fzf"
+    "fzf-.*-linux_$(github_release::arch_go)\.tar\.gz$" "/fzf" "fzf"
 }
 
 cli::fallback_bat() {
   github_release::install "sharkdp/bat" \
-    "bat-v.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "bat" "bat"
+    "bat-v.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "/bat" "bat"
 }
 
 cli::fallback_jq() {
