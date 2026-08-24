@@ -112,4 +112,38 @@ require('lazy').setup({
       })
     end,
   },
+
+  -- Знаки изменений git на полях (+/~/-) и переход между хунками
+  {
+    'lewis6991/gitsigns.nvim',
+    config = function()
+      require('gitsigns').setup({})
+    end,
+  },
+
+  -- Закомментировать строку/блок с учётом синтаксиса файла: gcc, gc
+  {
+    'numToStr/Comment.nvim',
+    config = function()
+      require('Comment').setup({})
+    end,
+  },
+
+  -- Подсказка доступных сочетаний клавиш при наборе <leader>
+  {
+    'folke/which-key.nvim',
+    event = 'VeryLazy',
+    config = function()
+      require('which-key').setup({})
+    end,
+  },
+
+  -- Визуальные направляющие отступов
+  {
+    'lukas-reineke/indent-blankline.nvim',
+    main = 'ibl',
+    config = function()
+      require('ibl').setup({})
+    end,
+  },
 })

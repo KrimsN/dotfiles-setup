@@ -5,9 +5,12 @@
 плагинов, bootstrap в самом init.lua через `git clone`) + базовый набор
 плагинов: nvim-tree (дерево файлов, `<leader>e`), lualine (статус-бар),
 telescope+plenary (нечёткий поиск, `<leader>ff/fg/fb`), nvim-treesitter
-(подсветка на основе AST), tokyonight (цветовая схема). LSP и
-автодополнение сознательно не включены — отдельный, более тяжёлый шаг
-(nvim-lspconfig + mason), не входит в текущий базовый уровень.
+(подсветка на основе AST), tokyonight (цветовая схема), gitsigns
+(git-знаки на полях), Comment.nvim (комментирование `gcc`/`gc`),
+which-key (подсказки по `<leader>`-комбинациям), indent-blankline
+(направляющие линии отступов). LSP и автодополнение сознательно не
+включены — отдельный, более тяжёлый шаг (nvim-lspconfig + mason), не
+входит в текущий базовый уровень.
 
 ## Бинарник ставится с GitHub Releases, а не из пакетного менеджера
 
@@ -41,3 +44,8 @@ telescope+plenary (нечёткий поиск, `<leader>ff/fg/fb`), nvim-treesi
 (включая скачивание бинарника и headless-синхронизацию всех плагинов без
 ошибок), идемпотентность (повторный запуск), бэкап конфига при локальном
 отличии, и полный прогон через `install.sh` (`DOTFILES_MODULES=nvim`).
+
+gitsigns/Comment.nvim/which-key/indent-blankline добавлены позже и пока
+не прогонялись через контейнерный test-module (Docker Desktop был
+недоступен в момент добавления) — при следующем изменении модуля nvim
+прогнать `scripts/test-module.sh nvim ubuntu24` заново.
