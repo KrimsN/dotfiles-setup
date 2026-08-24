@@ -1,0 +1,25 @@
+name: Test (CentOS)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  install:
+    name: centos9
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/centos/centos:stream9
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install sudo
+        run: dnf install -y sudo
+
+      - name: install.sh (first run)
+        run: NONINTERACTIVE=1 ./install.sh
+
+      - name: install.sh (idempotency check)
+        run: NONINTERACTIVE=1 ./install.sh

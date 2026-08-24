@@ -1,0 +1,27 @@
+name: Test (Ubuntu)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  install:
+    name: ubuntu24
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install sudo
+        run: |
+          apt-get update -y
+          apt-get install -y sudo
+
+      - name: install.sh (first run)
+        run: NONINTERACTIVE=1 ./install.sh
+
+      - name: install.sh (idempotency check)
+        run: NONINTERACTIVE=1 ./install.sh
