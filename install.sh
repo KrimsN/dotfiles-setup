@@ -49,33 +49,41 @@ install_sh::_bootstrap_git_curl() {
     id_like="${ID_LIKE:-}"
   fi
 
-  case "$id" in
-    ubuntu|debian)
-      sudo apt-get update -y
-      sudo apt-get install -y git curl ca-certificates
-      ;;
-    fedora)
-      sudo dnf install -y git curl
-      ;;
-    centos|rhel|rocky|almalinux)
-      sudo dnf install -y git curl 2>/dev/null || sudo yum install -y git curl
-      ;;
-    *)
-      case "$id_like" in
-        *debian*)
-          sudo apt-get update -y
-          sudo apt-get install -y git curl ca-certificates
-          ;;
-        *rhel*|*fedora*)
-          sudo dnf install -y git curl 2>/dev/null || sudo yum install -y git curl
-          ;;
-        *)
-          echo "install: не знаю как поставить git/curl на этой системе (ID='$id' ID_LIKE='$id_like')" >&2
-          exit 1
-          ;;
-      esac
-      ;;
-  esac
+  # Весь вывод этих команд перенаправлен в stderr (не stdout) —
+  # install_sh::_ensure_repo вызывает эту функцию внутри своего тела и
+  # сама вызывается через command substitution `$(...)`; любой байт,
+  # случайно попавший в stdout здесь, испортит захваченный путь к
+  # репозиторию (реально ловили баг: вывод apt-get попадал в переменную
+  # с путём — "File name too long" при попытке source этого "пути").
+  {
+    case "$id" in
+      ubuntu|debian)
+        sudo apt-get update -y
+        sudo apt-get install -y git curl ca-certificates
+        ;;
+      fedora)
+        sudo dnf install -y git curl
+        ;;
+      centos|rhel|rocky|almalinux)
+        sudo dnf install -y git curl 2>/dev/null || sudo yum install -y git curl
+        ;;
+      *)
+        case "$id_like" in
+          *debian*)
+            sudo apt-get update -y
+            sudo apt-get install -y git curl ca-certificates
+            ;;
+          *rhel*|*fedora*)
+            sudo dnf install -y git curl 2>/dev/null || sudo yum install -y git curl
+            ;;
+          *)
+            echo "install: не знаю как поставить git/curl на этой системе (ID='$id' ID_LIKE='$id_like')" >&2
+            exit 1
+            ;;
+        esac
+        ;;
+    esac
+  } >&2
 }
 
 install_sh::_self_dir() {
