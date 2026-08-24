@@ -35,9 +35,10 @@ if [ -z "${NO_COLOR:-}" ] && [ -t 1 ]; then
   LOG_CYAN=$'\033[1;36m'
   LOG_YELLOW=$'\033[1;33m'
   LOG_RED=$'\033[1;31m'
+  LOG_PURPLE=$'\033[1;35m'
   LOG_RESET=$'\033[0m'
 else
-  LOG_CYAN="" LOG_YELLOW="" LOG_RED="" LOG_RESET=""
+  LOG_CYAN="" LOG_YELLOW="" LOG_RED="" LOG_PURPLE="" LOG_RESET=""
 fi
 log::info() { echo "${LOG_CYAN}${LOG_TAG} ▶ ${1}${LOG_RESET}"; }
 log::warn() { echo "${LOG_YELLOW}${LOG_TAG} ⚠ ${1}${LOG_RESET}" >&2; }
@@ -45,20 +46,39 @@ log::err()  { echo "${LOG_RED}${LOG_TAG} ✖ ${1}${LOG_RESET}" >&2; }
 
 # ASCII-баннер ".KNRC" — печатается один раз в начале установки, чтобы
 # сразу было видно, какой скрипт выполняется (актуально для `curl | bash`,
-# где лог начинается посреди чужого вывода curl).
+# где лог начинается посреди чужого вывода curl). Обрамление считается по
+# фактической длине строк (не хардкодится), чтобы рамка не разъехалась
+# при правках самого ASCII-арта.
 install_sh::_banner() {
-  printf '%s' "$LOG_CYAN"
-  cat <<'BANNER'
-    █████   ████            ███                          ██████   █████
-   ░░███   ███░            ░░░                          ░░██████ ░░███
-    ░███  ███    ████████  ████  █████████████    █████  ░███░███ ░███  ████████   ██████
-    ░███████    ░░███░░███░░███ ░░███░░███░░███  ███░░   ░███░░███░███ ░░███░░███ ███░░███
-    ░███░░███    ░███ ░░░  ░███  ░███ ░███ ░███ ░░█████  ░███ ░░██████  ░███ ░░░ ░███ ░░░
-    ░███ ░░███   ░███      ░███  ░███ ░███ ░███  ░░░░███ ░███  ░░█████  ░███     ░███  ███
- ██ █████ ░░████ █████     █████ █████░███ █████ ██████  █████  ░░█████ █████    ░░██████
-░░ ░░░░░   ░░░░ ░░░░░     ░░░░░ ░░░░░ ░░░ ░░░░░ ░░░░░░  ░░░░░    ░░░░░ ░░░░░      ░░░░░░
-BANNER
-  echo "        unix-окружение в одну команду: zsh · tmux · nvim · p10k"
+  local art=(
+    "    █████   ████            ███                          ██████   █████"
+    "   ░░███   ███░            ░░░                          ░░██████ ░░███"
+    "    ░███  ███    ████████  ████  █████████████    █████  ░███░███ ░███  ████████   ██████"
+    "    ░███████    ░░███░░███░░███ ░░███░░███░░███  ███░░   ░███░░███░███ ░░███░░███ ███░░███"
+    "    ░███░░███    ░███ ░░░  ░███  ░███ ░███ ░███ ░░█████  ░███ ░░██████  ░███ ░░░ ░███ ░░░"
+    "    ░███ ░░███   ░███      ░███  ░███ ░███ ░███  ░░░░███ ░███  ░░█████  ░███     ░███  ███"
+    " ██ █████ ░░████ █████     █████ █████░███ █████ ██████  █████  ░░█████ █████    ░░██████"
+    "░░ ░░░░░   ░░░░ ░░░░░     ░░░░░ ░░░░░ ░░░ ░░░░░ ░░░░░░  ░░░░░    ░░░░░ ░░░░░      ░░░░░░"
+  )
+  local subtitle="unix-окружение в одну команду: zsh · tmux · nvim · p10k"
+
+  local line max=0
+  for line in "${art[@]}" "$subtitle"; do
+    (( ${#line} > max )) && max=${#line}
+  done
+
+  local pad=2 inner border
+  inner=$(( max + pad * 2 ))
+  border=$(printf '═%.0s' $(seq 1 "$inner"))
+
+  printf '%s' "$LOG_PURPLE"
+  printf '╔%s╗\n' "$border"
+  for line in "${art[@]}"; do
+    printf '║%*s%s%*s║\n' "$pad" '' "$line" $(( max - ${#line} + pad )) ''
+  done
+  printf '║%*s║\n' "$inner" ''
+  printf '║%*s%s%*s║\n' "$pad" '' "$subtitle" $(( max - ${#subtitle} + pad )) ''
+  printf '╚%s╝\n' "$border"
   printf '%s' "$LOG_RESET"
   echo ""
 }
@@ -158,10 +178,10 @@ install_sh::_ensure_repo() {
 
   local dest="${DOTFILES_DIR:-$DEFAULT_INSTALL_DIR}"
   if [ -d "$dest/.git" ]; then
-    log::info "install: обновляю существующий клон в $dest"
+    log::info "install: обновляю существующий клон в $dest" >&2
     git -C "$dest" pull --ff-only >&2
   else
-    log::info "install: клонирую $REPO_URL в $dest"
+    log::info "install: клонирую $REPO_URL в $dest" >&2
     mkdir -p "$(dirname "$dest")"
     git clone --depth=1 "$REPO_URL" "$dest" >&2
   fi
