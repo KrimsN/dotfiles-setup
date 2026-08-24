@@ -8,8 +8,9 @@ vim.g.maplocalleader = ' '
 
 local opt = vim.opt
 opt.number = true
-opt.relativenumber = true
 opt.mouse = 'a'
+opt.cursorline = true
+opt.history = 1000
 -- Системный буфер обмена по умолчанию, а не безымянный регистр vim —
 -- иначе yank/paste не синхронизируются с буфером ОС/tmux
 opt.clipboard = 'unnamedplus'
@@ -35,10 +36,13 @@ opt.updatetime = 250
 -- === Базовые keymaps ===
 local map = vim.keymap.set
 map('n', '<leader>h', ':nohlsearch<CR>', { desc = 'Убрать подсветку поиска' })
+map('n', '<Esc>', ':nohlsearch<CR>', { desc = 'Убрать подсветку поиска' })
 map('n', '<C-h>', '<C-w>h', { desc = 'Перейти в панель слева' })
 map('n', '<C-j>', '<C-w>j', { desc = 'Перейти в панель снизу' })
 map('n', '<C-k>', '<C-w>k', { desc = 'Перейти в панель сверху' })
 map('n', '<C-l>', '<C-w>l', { desc = 'Перейти в панель справа' })
+map('n', '<C-s>', ':w<CR>', { desc = 'Сохранить файл' })
+map('i', '<C-s>', '<Esc>:w<CR>a', { desc = 'Сохранить файл' })
 
 -- === lazy.nvim: bootstrap менеджера плагинов ===
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
