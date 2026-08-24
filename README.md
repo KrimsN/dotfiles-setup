@@ -1,18 +1,39 @@
 # dotfiles-setup
 
 Набор скриптов для быстрой настройки unix-окружения на Ubuntu, Debian,
-Fedora и CentOS: zsh + oh-my-zsh + Powerlevel10k, tmux и набор CLI-утилит
-(полный список — в [CLAUDE.md](CLAUDE.md)).
+Fedora и CentOS: zsh + oh-my-zsh + Powerlevel10k, tmux (+ TPM,
+tmux-resurrect, tmux-continuum), git-экосистема (gh), docker и набор
+CLI-утилит (полный список — в [CLAUDE.md](CLAUDE.md)).
 
-Проект в начальной стадии — установочная логика пока не реализована,
-структура репозитория готовится под неё.
+## Быстрый старт
 
-## Планы
+```bash
+curl -fsSL https://raw.githubusercontent.com/KrimsN/dotfiles-setup/master/install.sh | bash
+```
 
-- [ ] Определение дистрибутива и пакетного менеджера
-- [ ] Установка и настройка zsh + oh-my-zsh + Powerlevel10k (опционально —
-      как shell по умолчанию или как альтернатива)
-- [ ] Установка и настройка tmux (+ TPM, tmux-resurrect, tmux-continuum)
-- [x] Список программ и плагинов зафиксирован (см. CLAUDE.md)
-- [ ] Установка зафиксированных программ и плагинов
-- [ ] Единая команда быстрого развёртывания
+Скрипт сам поставит `git`/`curl`, если их ещё нет, склонирует репозиторий
+и спросит, что устанавливать (или поставит всё — по умолчанию).
+
+Из уже склонированного репозитория — то же самое:
+
+```bash
+./install.sh
+```
+
+Без вопросов, сразу всё:
+
+```bash
+./install.sh --yes
+```
+
+Только конкретные модули:
+
+```bash
+DOTFILES_MODULES="base zsh tmux" ./install.sh
+```
+
+## Статус
+
+Все модули реализованы и протестированы на Ubuntu, Debian, Fedora и
+CentOS (Docker/WSL). Подробности реализации, тестирования и принятые
+решения — в [CLAUDE.md](CLAUDE.md).
