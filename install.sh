@@ -62,10 +62,14 @@ install_sh::_bootstrap_git_curl() {
         sudo apt-get install -y git curl ca-certificates
         ;;
       fedora)
-        sudo dnf install -y git curl
+        sudo dnf install -y --allowerasing git curl
         ;;
       centos|rhel|rocky|almalinux)
-        sudo dnf install -y git curl 2>/dev/null || sudo yum install -y git curl
+        # --allowerasing: на CentOS Stream минимальные образы содержат
+        # curl-minimal, который конфликтует с полным curl без этого
+        # флага (реально ловили эту ошибку при тестировании).
+        sudo dnf install -y --allowerasing git curl 2>/dev/null \
+          || sudo yum install -y git curl
         ;;
       *)
         case "$id_like" in
@@ -74,7 +78,8 @@ install_sh::_bootstrap_git_curl() {
             sudo apt-get install -y git curl ca-certificates
             ;;
           *rhel*|*fedora*)
-            sudo dnf install -y git curl 2>/dev/null || sudo yum install -y git curl
+            sudo dnf install -y --allowerasing git curl 2>/dev/null \
+              || sudo yum install -y git curl
             ;;
           *)
             echo "install: не знаю как поставить git/curl на этой системе (ID='$id' ID_LIKE='$id_like')" >&2
