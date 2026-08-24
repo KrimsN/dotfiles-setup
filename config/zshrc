@@ -1,0 +1,28 @@
+# Managed by dotfiles-setup.
+# Этот файл копируется в ~/.zshrc модулем modules/zsh.sh. Если уже
+# существует и отличается — скрипт делает бэкап перед перезаписью
+# (см. zsh::write_zshrc), а не молча затирает.
+
+export ZSH="$HOME/.oh-my-zsh"
+
+ZSH_THEME="powerlevel10k/powerlevel10k"
+
+plugins=(
+  git
+  sudo
+  command-not-found
+  extract
+  colored-man-pages
+  history-substring-search
+  docker
+  docker-compose
+  zsh-autosuggestions
+  fast-syntax-highlighting
+  zsh-completions
+)
+
+source "$ZSH/oh-my-zsh.sh"
+
+# Powerlevel10k сам запускает мастер настройки при первом интерактивном
+# запуске, если ~/.p10k.zsh ещё не существует.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
