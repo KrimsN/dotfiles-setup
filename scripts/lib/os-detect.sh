@@ -90,7 +90,10 @@ os::pkg_install() {
   fi
   case "$PKG_MANAGER" in
     apt) sudo apt-get install -y "$@" ;;
-    dnf) sudo dnf install -y "$@" ;;
+    # --allowerasing: минимальные образы (CentOS Stream/RHEL minimal)
+    # ставят curl-minimal вместо curl, и обычный `dnf install curl`
+    # падает на конфликте пакетов — просим dnf заменить его сам.
+    dnf) sudo dnf install -y --allowerasing "$@" ;;
     yum) sudo yum install -y "$@" ;;
     *)
       log::err "os::pkg_install: PKG_MANAGER не задан — вызови os::detect первым"
@@ -112,7 +115,7 @@ os::pkg_try_install() {
   fi
   case "$PKG_MANAGER" in
     apt) sudo apt-get install -y "$1" ;;
-    dnf) sudo dnf install -y "$1" ;;
+    dnf) sudo dnf install -y --allowerasing "$1" ;;
     yum) sudo yum install -y "$1" ;;
     *)
       log::err "os::pkg_try_install: PKG_MANAGER не задан — вызови os::detect первым"
