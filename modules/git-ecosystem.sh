@@ -30,7 +30,7 @@ git_eco::install_gh_debian() {
 
 git_eco::install_gh_rhel() {
   os::pkg_install 'dnf-command(config-manager)' \
-    || echo "git-ecosystem: dnf-command(config-manager), возможно, уже доступен" >&2
+    || log::warn "git-ecosystem: dnf-command(config-manager), возможно, уже доступен"
 
   case "$PKG_MANAGER" in
     dnf)
@@ -46,16 +46,16 @@ git_eco::install_gh_rhel() {
 
 git_eco::install_gh() {
   if command -v gh >/dev/null 2>&1; then
-    echo "git-ecosystem: gh уже установлен, пропускаю"
+    log::info "git-ecosystem: gh уже установлен, пропускаю"
     return 0
   fi
 
-  echo "git-ecosystem: устанавливаю gh"
+  log::info "git-ecosystem: устанавливаю gh"
   case "$OS_FAMILY" in
     debian) git_eco::install_gh_debian ;;
     rhel)   git_eco::install_gh_rhel ;;
     *)
-      echo "git-ecosystem: неизвестное семейство ОС '$OS_FAMILY', не знаю как ставить gh" >&2
+      log::err "git-ecosystem: неизвестное семейство ОС '$OS_FAMILY', не знаю как ставить gh"
       return 1
       ;;
   esac
@@ -63,7 +63,7 @@ git_eco::install_gh() {
 
 git_eco::install() {
   git_eco::install_gh
-  echo "git-ecosystem: готово. (git-delta ставится отдельно модулем modules/cli-tools.sh)"
+  log::info "git-ecosystem: готово. (git-delta ставится отдельно модулем modules/cli-tools.sh)"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

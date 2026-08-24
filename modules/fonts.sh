@@ -25,7 +25,7 @@ fonts::_install_one() {
   local dest="$FONTS_DIR/${asset}NerdFont"
 
   if [ -d "$dest" ] && [ -n "$(ls -A "$dest" 2>/dev/null)" ]; then
-    echo "fonts: $label уже установлен, пропускаю"
+    log::info "fonts: $label уже установлен, пропускаю"
     return 0
   fi
 
@@ -36,20 +36,20 @@ fonts::_install_one() {
     | grep -E "/${asset}\.zip$" | head -n1)"
 
   if [ -z "$url" ]; then
-    echo "fonts: не удалось найти релиз для $label (asset=$asset)" >&2
+    log::err "fonts: не удалось найти релиз для $label (asset=$asset)"
     return 1
   fi
 
   local tmp
   tmp="$(mktemp -d)"
-  echo "fonts: скачиваю $label: $url"
+  log::info "fonts: скачиваю $label: $url"
   curl -fsSL "$url" -o "$tmp/font.zip"
   mkdir -p "$dest"
   unzip -q -o "$tmp/font.zip" -d "$dest"
   # В архиве кроме шрифтов лежат README/LICENSE — не нужны системе шрифтов.
   find "$dest" -type f ! \( -iname '*.ttf' -o -iname '*.otf' \) -delete
   rm -rf "$tmp"
-  echo "fonts: $label установлен в $dest"
+  log::info "fonts: $label установлен в $dest"
 }
 
 fonts::install() {
@@ -58,10 +58,10 @@ fonts::install() {
   fonts::_install_one "JetBrainsMono Nerd Font" "JetBrainsMono"
   fonts::_install_one "FiraCode Nerd Font" "FiraCode"
 
-  echo "fonts: обновляю кэш шрифтов"
+  log::info "fonts: обновляю кэш шрифтов"
   fc-cache -f "$FONTS_DIR" >/dev/null
 
-  echo "fonts: готово. Осталось выбрать 'JetBrainsMono Nerd Font' или 'FiraCode Nerd Font' в настройках шрифта твоего терминала вручную — это единственный шаг, который скрипт сделать не может."
+  log::info "fonts: готово. Осталось выбрать 'JetBrainsMono Nerd Font' или 'FiraCode Nerd Font' в настройках шрифта твоего терминала вручную — это единственный шаг, который скрипт сделать не может."
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

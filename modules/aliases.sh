@@ -34,7 +34,7 @@ aliases::install() {
   rcfile::upsert_block "$HOME/.bashrc" "aliases" \
     "[ -f \"$snippet_dest\" ] && source \"$snippet_dest\""
 
-  echo "aliases: установлены ($snippet_dest)"
+  log::info "aliases: установлены ($snippet_dest)"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

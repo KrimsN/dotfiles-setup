@@ -13,17 +13,17 @@ epel::ensure() {
     return 0
   fi
   if rpm -q epel-release >/dev/null 2>&1; then
-    echo "epel: уже включён, пропускаю"
+    log::info "epel: уже включён, пропускаю"
     return 0
   fi
 
-  echo "epel: включаю EPEL"
+  log::info "epel: включаю EPEL"
   os::pkg_install epel-release \
-    || { echo "epel: не удалось установить epel-release, продолжаю без него" >&2; return 0; }
+    || { log::warn "epel: не удалось установить epel-release, продолжаю без него"; return 0; }
 
   if command -v crb >/dev/null 2>&1; then
-    echo "epel: включаю репозиторий CRB"
-    sudo crb enable || echo "epel: не удалось включить CRB, продолжаю без него" >&2
+    log::info "epel: включаю репозиторий CRB"
+    sudo crb enable || log::warn "epel: не удалось включить CRB, продолжаю без него"
   fi
 }
 

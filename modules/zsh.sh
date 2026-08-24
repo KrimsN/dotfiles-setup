@@ -18,23 +18,23 @@ ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 zsh::_clone_if_missing() {
   local repo="$1" dest="$2"
   if [ -d "$dest" ]; then
-    echo "zsh: уже установлено, пропускаю: $dest"
+    log::info "zsh: уже установлено, пропускаю: $dest"
   else
     git clone --depth=1 "$repo" "$dest"
   fi
 }
 
 zsh::install_package() {
-  echo "zsh: устанавливаю пакет zsh"
+  log::info "zsh: устанавливаю пакет zsh"
   os::pkg_install zsh
 }
 
 zsh::install_oh_my_zsh() {
   if [ -d "$HOME/.oh-my-zsh" ]; then
-    echo "zsh: oh-my-zsh уже установлен, пропускаю"
+    log::info "zsh: oh-my-zsh уже установлен, пропускаю"
     return 0
   fi
-  echo "zsh: устанавливаю oh-my-zsh"
+  log::info "zsh: устанавливаю oh-my-zsh"
   # RUNZSH=no  — не переключаться в zsh сразу после установки
   # CHSH=no    — смену login-shell делаем сами в zsh::configure_shell
   # KEEP_ZSHRC=yes — не даём инсталлятору генерировать свой .zshrc,
@@ -72,12 +72,12 @@ zsh::write_zshrc() {
 
   if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
     local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
-    echo "zsh: существующий ~/.zshrc отличается — делаю бэкап в $backup"
+    log::warn "zsh: существующий ~/.zshrc отличается — делаю бэкап в $backup"
     cp "$dest" "$backup"
   fi
 
   cp "$src" "$dest"
-  echo "zsh: ~/.zshrc обновлён"
+  log::info "zsh: ~/.zshrc обновлён"
 }
 
 # Спрашивает (или берёт из env/дефолта), нужно ли делать zsh login-shell
@@ -111,19 +111,19 @@ zsh::configure_shell() {
   current_shell="$(getent passwd "$USER" | cut -d: -f7)"
 
   if [ "$current_shell" = "$zsh_path" ]; then
-    echo "zsh: уже установлен как shell по умолчанию, пропускаю"
+    log::info "zsh: уже установлен как shell по умолчанию, пропускаю"
     return 0
   fi
 
   if zsh::_want_default_shell; then
     if ! grep -qxF "$zsh_path" /etc/shells 2>/dev/null; then
-      echo "zsh: добавляю $zsh_path в /etc/shells"
+      log::info "zsh: добавляю $zsh_path в /etc/shells"
       echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
     fi
-    echo "zsh: делаю zsh shell'ом по умолчанию для $USER"
+    log::info "zsh: делаю zsh shell'ом по умолчанию для $USER"
     sudo chsh -s "$zsh_path" "$USER"
   else
-    echo "zsh: оставляю текущий login-shell без изменений (zsh доступен как альтернативный: $zsh_path)"
+    log::info "zsh: оставляю текущий login-shell без изменений (zsh доступен как альтернативный: $zsh_path)"
   fi
 }
 
@@ -134,7 +134,7 @@ zsh::install() {
   zsh::install_plugins
   zsh::write_zshrc
   zsh::configure_shell
-  echo "zsh: готово. Настройка Powerlevel10k (мастер 'p10k configure') запустится при первом интерактивном запуске zsh."
+  log::info "zsh: готово. Настройка Powerlevel10k (мастер 'p10k configure') запустится при первом интерактивном запуске zsh."
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

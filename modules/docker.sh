@@ -17,10 +17,10 @@ set -euo pipefail
 
 docker::install_engine() {
   if command -v docker >/dev/null 2>&1; then
-    echo "docker: уже установлен, пропускаю"
+    log::info "docker: уже установлен, пропускаю"
     return 0
   fi
-  echo "docker: устанавливаю через официальный скрипт get.docker.com"
+  log::info "docker: устанавливаю через официальный скрипт get.docker.com"
   local script
   script="$(mktemp)"
   curl -fsSL https://get.docker.com -o "$script"
@@ -30,12 +30,12 @@ docker::install_engine() {
 
 docker::enable_service() {
   if ! command -v systemctl >/dev/null 2>&1; then
-    echo "docker: systemctl недоступен (нет systemd — контейнер/WSL без него?), пропускаю автозапуск"
+    log::warn "docker: systemctl недоступен (нет systemd — контейнер/WSL без него?), пропускаю автозапуск"
     return 0
   fi
-  echo "docker: включаю и запускаю сервис"
+  log::info "docker: включаю и запускаю сервис"
   sudo systemctl enable --now docker \
-    || echo "docker: не удалось включить сервис через systemctl, пропускаю" >&2
+    || log::warn "docker: не удалось включить сервис через systemctl, пропускаю"
 }
 
 # Спрашивает (или берёт из env/дефолта), нужно ли добавлять текущего
@@ -64,16 +64,16 @@ docker::_want_user_in_group() {
 
 docker::configure_user_group() {
   if groups "$USER" | grep -qw docker; then
-    echo "docker: $USER уже в группе docker, пропускаю"
+    log::info "docker: $USER уже в группе docker, пропускаю"
     return 0
   fi
 
   if docker::_want_user_in_group; then
-    echo "docker: добавляю $USER в группу docker"
+    log::info "docker: добавляю $USER в группу docker"
     sudo usermod -aG docker "$USER"
-    echo "docker: изменения группы применятся после перелогина"
+    log::info "docker: изменения группы применятся после перелогина"
   else
-    echo "docker: оставляю без добавления в группу (команды docker — через sudo)"
+    log::info "docker: оставляю без добавления в группу (команды docker — через sudo)"
   fi
 }
 
@@ -81,7 +81,7 @@ docker::install() {
   docker::install_engine
   docker::enable_service
   docker::configure_user_group
-  echo "docker: готово."
+  log::info "docker: готово."
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

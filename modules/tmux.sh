@@ -23,14 +23,14 @@ tmux::_dotfiles_dir() {
 }
 
 tmux::install_package() {
-  echo "tmux: устанавливаю пакет tmux"
+  log::info "tmux: устанавливаю пакет tmux"
   os::pkg_install tmux
 }
 
 tmux::install_tpm() {
   local dest="$HOME/.tmux/plugins/tpm"
   if [ -d "$dest" ]; then
-    echo "tmux: TPM уже установлен, пропускаю"
+    log::info "tmux: TPM уже установлен, пропускаю"
   else
     git clone --depth=1 https://github.com/tmux-plugins/tpm "$dest"
   fi
@@ -47,16 +47,16 @@ tmux::write_config() {
 
   if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
     local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
-    echo "tmux: существующий ~/.tmux.conf отличается — делаю бэкап в $backup"
+    log::warn "tmux: существующий ~/.tmux.conf отличается — делаю бэкап в $backup"
     cp "$dest" "$backup"
   fi
 
   cp "$src" "$dest"
-  echo "tmux: ~/.tmux.conf обновлён"
+  log::info "tmux: ~/.tmux.conf обновлён"
 }
 
 tmux::install_plugins() {
-  echo "tmux: устанавливаю плагины через TPM (headless)"
+  log::info "tmux: устанавливаю плагины через TPM (headless)"
   # install_plugins читает путь к TPM из переменной окружения tmux-сервера,
   # которую регистрирует сам ~/.tmux.conf при загрузке (строка `run -b
   # '~/.tmux/plugins/tpm/tpm'`) — поэтому нужен хотя бы один запущенный
@@ -83,7 +83,7 @@ tmux::install_autoattach_hook() {
   rcfile::upsert_block "$HOME/.bashrc" "tmux-autoattach" \
     "[ -f \"$snippet_dest\" ] && source \"$snippet_dest\""
 
-  echo "tmux: хук авто-подключения установлен ($snippet_dest)"
+  log::info "tmux: хук авто-подключения установлен ($snippet_dest)"
 }
 
 tmux::install() {
@@ -92,7 +92,7 @@ tmux::install() {
   tmux::write_config
   tmux::install_plugins
   tmux::install_autoattach_hook
-  echo "tmux: готово. Голый 'tmux' будет подключаться к существующей сессии, если она есть."
+  log::info "tmux: готово. Голый 'tmux' будет подключаться к существующей сессии, если она есть."
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

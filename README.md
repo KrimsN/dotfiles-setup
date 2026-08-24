@@ -1,4 +1,6 @@
-# dotfiles-setup
+# .krimsnrc
+
+*(возможное короткое название: `.knrc`)*
 
 Набор скриптов для быстрой настройки unix-окружения на Ubuntu, Debian,
 Fedora и CentOS: zsh + oh-my-zsh + Powerlevel10k (+ Nerd Font-шрифты),

@@ -1,4 +1,6 @@
-# unix-setup / dotfiles-setup
+# .krimsnrc (unix-setup / dotfiles-setup)
+
+Возможное короткое название: `.knrc`.
 
 ## Цель проекта
 
@@ -119,6 +121,7 @@ git/curl), так и из склонированного репозитория.
 | `scripts/lib/epel.sh` | [docs/modules/epel.md](docs/modules/epel.md) |
 | `modules/base.sh` | [docs/modules/base.md](docs/modules/base.md) |
 | `scripts/lib/github-release.sh` | [docs/modules/github-release.md](docs/modules/github-release.md) |
+| `scripts/lib/log.sh` | [docs/modules/log.md](docs/modules/log.md) |
 | `modules/extras.sh` | [docs/modules/extras.md](docs/modules/extras.md) |
 | `install.sh` | [docs/modules/install.md](docs/modules/install.md) |
 | `modules/fonts.sh` | [docs/modules/fonts.md](docs/modules/fonts.md) |

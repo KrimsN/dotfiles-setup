@@ -78,7 +78,7 @@ cli::fallback_httpie() {
   # У httpie нет статических бинарников на GitHub Releases (это
   # python-пакет) — ставим через pip как альтернативу пакетному
   # менеджеру.
-  echo "cli-tools: httpie недоступен через $PKG_MANAGER — ставлю через pip"
+  log::info "cli-tools: httpie недоступен через $PKG_MANAGER — ставлю через pip"
   command -v pip3 >/dev/null 2>&1 || os::pkg_install python3-pip
   pip3 install --user httpie
 }
@@ -96,7 +96,7 @@ cli::fallback() {
     jq) cli::fallback_jq ;;
     httpie) cli::fallback_httpie ;;
     *)
-      echo "cli-tools: нет fallback-стратегии для пакета '$1' — пропускаю" >&2
+      log::err "cli-tools: нет fallback-стратегии для пакета '$1' — пропускаю"
       return 1
       ;;
   esac
@@ -104,13 +104,13 @@ cli::fallback() {
 
 cli::install_pkg_group() {
   epel::ensure
-  echo "cli-tools: устанавливаю ripgrep, fd, fzf, bat, jq, httpie через пакетный менеджер"
+  log::info "cli-tools: устанавливаю ripgrep, fd, fzf, bat, jq, httpie через пакетный менеджер"
   local pkg
   for pkg in ripgrep fzf jq httpie bat fd-find; do
     if os::pkg_try_install "$pkg"; then
-      echo "cli-tools: $pkg установлен через $PKG_MANAGER"
+      log::info "cli-tools: $pkg установлен через $PKG_MANAGER"
     else
-      echo "cli-tools: $pkg недоступен через $PKG_MANAGER — пробую fallback" >&2
+      log::warn "cli-tools: $pkg недоступен через $PKG_MANAGER — пробую fallback"
       cli::fallback "$pkg"
     fi
   done
@@ -123,11 +123,11 @@ cli::install_pkg_group() {
 cli::ensure_symlinks() {
   if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
     sudo ln -sf "$(command -v fdfind)" /usr/local/bin/fd
-    echo "cli-tools: символическая ссылка fd -> $(command -v fdfind)"
+    log::info "cli-tools: символическая ссылка fd -> $(command -v fdfind)"
   fi
   if ! command -v bat >/dev/null 2>&1 && command -v batcat >/dev/null 2>&1; then
     sudo ln -sf "$(command -v batcat)" /usr/local/bin/bat
-    echo "cli-tools: символическая ссылка bat -> $(command -v batcat)"
+    log::info "cli-tools: символическая ссылка bat -> $(command -v batcat)"
   fi
 }
 
@@ -141,12 +141,12 @@ cli::write_bat_config() {
 
   if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
     local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
-    echo "cli-tools: существующий $dest отличается — делаю бэкап в $backup"
+    log::warn "cli-tools: существующий $dest отличается — делаю бэкап в $backup"
     cp "$dest" "$backup"
   fi
 
   cp "$src" "$dest"
-  echo "cli-tools: $dest обновлён"
+  log::info "cli-tools: $dest обновлён"
 }
 
 cli::install() {
@@ -157,7 +157,7 @@ cli::install() {
   cli::install_curlie
   cli::install_zoxide
   cli::write_bat_config
-  echo "cli-tools: готово."
+  log::info "cli-tools: готово."
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

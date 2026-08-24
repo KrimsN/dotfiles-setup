@@ -25,6 +25,23 @@
 
 set -euo pipefail
 
+# Собственная копия log::info/warn/err (см. scripts/lib/log.sh) —
+# нужна ДО того, как репозиторий склонирован (случай `curl | bash`,
+# см. install_sh::_bootstrap_git_curl ниже), поэтому подключить
+# scripts/lib/log.sh отсюда невозможно. Та же причина дублирования, что
+# и у логики определения дистрибутива чуть ниже.
+if [ -z "${NO_COLOR:-}" ] && [ -t 1 ]; then
+  LOG_CYAN=$'\033[1;36m'
+  LOG_YELLOW=$'\033[1;33m'
+  LOG_RED=$'\033[1;31m'
+  LOG_RESET=$'\033[0m'
+else
+  LOG_CYAN="" LOG_YELLOW="" LOG_RED="" LOG_RESET=""
+fi
+log::info() { echo "${LOG_CYAN}▶ ${1}${LOG_RESET}"; }
+log::warn() { echo "${LOG_YELLOW}⚠ ${1}${LOG_RESET}" >&2; }
+log::err()  { echo "${LOG_RED}✖ ${1}${LOG_RESET}" >&2; }
+
 REPO_URL="${DOTFILES_REPO_URL:-https://github.com/KrimsN/dotfiles-setup.git}"
 DEFAULT_INSTALL_DIR="$HOME/.local/share/dotfiles-setup"
 ALL_MODULES=(base zsh tmux nvim aliases cli-tools git-ecosystem docker extras fonts)
@@ -46,7 +63,7 @@ install_sh::_bootstrap_git_curl() {
     return 0
   fi
 
-  echo "install: git/curl отсутствуют, ставлю для бутстрапа" >&2
+  log::warn "install: git/curl отсутствуют, ставлю для бутстрапа"
 
   local id="" id_like=""
   if [ -r /etc/os-release ]; then
@@ -89,7 +106,7 @@ install_sh::_bootstrap_git_curl() {
               || sudo yum install -y git curl
             ;;
           *)
-            echo "install: не знаю как поставить git/curl на этой системе (ID='$id' ID_LIKE='$id_like')" >&2
+            log::err "install: не знаю как поставить git/curl на этой системе (ID='$id' ID_LIKE='$id_like')"
             exit 1
             ;;
         esac
@@ -120,10 +137,10 @@ install_sh::_ensure_repo() {
 
   local dest="${DOTFILES_DIR:-$DEFAULT_INSTALL_DIR}"
   if [ -d "$dest/.git" ]; then
-    echo "install: обновляю существующий клон в $dest" >&2
+    log::info "install: обновляю существующий клон в $dest"
     git -C "$dest" pull --ff-only >&2
   else
-    echo "install: клонирую $REPO_URL в $dest" >&2
+    log::info "install: клонирую $REPO_URL в $dest"
     mkdir -p "$(dirname "$dest")"
     git clone --depth=1 "$REPO_URL" "$dest" >&2
   fi
@@ -179,7 +196,7 @@ install_sh::_run_module() {
     extras)         extras::install ;;
     fonts)          fonts::install ;;
     zsh-terminal-app) zsh_terminal_app::install ;;
-    *) echo "install: неизвестный модуль '$1', пропускаю" >&2 ;;
+    *) log::warn "install: неизвестный модуль '$1', пропускаю" ;;
   esac
 }
 
@@ -188,6 +205,12 @@ install_sh::main() {
   repo_dir="$(install_sh::_ensure_repo)"
   export DOTFILES_DIR="$repo_dir"
 
+  # log::info/warn/err уже определены выше (см. комментарий у REPO_URL) —
+  # источник ниже лишь синхронизирует канонический вариант из репозитория,
+  # чтобы модули, подключаемые напрямую (в обход install.sh, например при
+  # разработке), тоже могли им пользоваться.
+  # shellcheck disable=SC1091
+  source "$repo_dir/scripts/lib/log.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/scripts/lib/os-detect.sh"
   os::detect
@@ -224,21 +247,21 @@ install_sh::main() {
   local modules
   modules="$(install_sh::_selected_modules)"
   echo ""
-  echo "install: устанавливаю: $modules"
+  log::info "install: устанавливаю: $modules"
 
   local m
   for m in $modules; do
     echo ""
-    echo "=== $m ==="
+    log::info "=== $m ==="
     install_sh::_run_module "$m"
   done
 
   echo ""
-  echo "Готово! Перелогинься (или открой новый терминал), чтобы изменения shell/группы docker применились."
+  log::info "Готово! Перелогинься (или открой новый терминал), чтобы изменения shell/группы docker применились."
   echo ""
-  echo "Настройка темы Powerlevel10k запустится автоматически при первом"
-  echo "интерактивном запуске zsh. Чтобы перезапустить мастер настройки"
-  echo "вручную в любой момент, выполни: p10k configure"
+  log::info "Настройка темы Powerlevel10k запустится автоматически при первом"
+  log::info "интерактивном запуске zsh. Чтобы перезапустить мастер настройки"
+  log::info "вручную в любой момент, выполни: p10k configure"
 }
 
 install_sh::main "$@"

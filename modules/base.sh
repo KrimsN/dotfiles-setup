@@ -15,9 +15,9 @@ set -euo pipefail
 
 base::install() {
   epel::ensure
-  echo "base: устанавливаю базовый набор пакетов"
+  log::info "base: устанавливаю базовый набор пакетов"
   os::pkg_install git curl wget vim htop btop tree unzip zip diffutils
-  echo "base: готово."
+  log::info "base: готово."
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

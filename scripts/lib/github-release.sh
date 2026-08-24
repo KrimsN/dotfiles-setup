@@ -39,7 +39,7 @@ github_release::install() {
   local repo="$1" asset_regex="$2" inner_path_glob="$3" target_name="$4"
 
   if command -v "$target_name" >/dev/null 2>&1; then
-    echo "github-release: $target_name уже установлен, пропускаю"
+    log::info "github-release: $target_name уже установлен, пропускаю"
     return 0
   fi
 
@@ -50,13 +50,13 @@ github_release::install() {
     | grep -E "$asset_regex" | head -n1)"
 
   if [ -z "$url" ]; then
-    echo "github-release: не удалось найти релиз для $target_name (repo=$repo, pattern=$asset_regex)" >&2
+    log::err "github-release: не удалось найти релиз для $target_name (repo=$repo, pattern=$asset_regex)"
     return 1
   fi
 
   local tmp
   tmp="$(mktemp -d)"
-  echo "github-release: скачиваю $target_name: $url"
+  log::info "github-release: скачиваю $target_name: $url"
 
   local bin_path
   if [[ "$url" == *.tar.gz ]]; then
@@ -69,14 +69,14 @@ github_release::install() {
   fi
 
   if [ -z "$bin_path" ] || [ ! -f "$bin_path" ]; then
-    echo "github-release: бинарник '$inner_path_glob' не найден в архиве $target_name" >&2
+    log::err "github-release: бинарник '$inner_path_glob' не найден в архиве $target_name"
     rm -rf "$tmp"
     return 1
   fi
 
   sudo install -m 0755 "$bin_path" "/usr/local/bin/$target_name"
   rm -rf "$tmp"
-  echo "github-release: $target_name установлен в /usr/local/bin/$target_name"
+  log::info "github-release: $target_name установлен в /usr/local/bin/$target_name"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

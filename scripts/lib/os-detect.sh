@@ -16,7 +16,7 @@ set -euo pipefail
 
 os::detect() {
   if [ ! -r /etc/os-release ]; then
-    echo "os-detect: /etc/os-release не найден — неподдерживаемая система" >&2
+    log::err "os-detect: /etc/os-release не найден — неподдерживаемая система"
     return 1
   fi
 
@@ -44,8 +44,8 @@ os::detect() {
         *debian*) OS_FAMILY="debian" ;;
         *rhel*|*fedora*) OS_FAMILY="rhel" ;;
         *)
-          echo "os-detect: неподдерживаемый дистрибутив: ID='$OS_ID' ID_LIKE='$id_like'" >&2
-          echo "os-detect: поддерживаются Ubuntu, Debian, Fedora, CentOS" >&2
+          log::err "os-detect: неподдерживаемый дистрибутив: ID='$OS_ID' ID_LIKE='$id_like'"
+          log::err "os-detect: поддерживаются Ubuntu, Debian, Fedora, CentOS"
           return 1
           ;;
       esac
@@ -63,7 +63,7 @@ os::detect() {
     elif command -v yum >/dev/null 2>&1; then
       PKG_MANAGER="yum"
     else
-      echo "os-detect: не найден ни dnf, ни yum на системе семейства rhel" >&2
+      log::err "os-detect: не найден ни dnf, ни yum на системе семейства rhel"
       return 1
     fi
   fi
@@ -77,7 +77,7 @@ os::pkg_update() {
     dnf) sudo dnf makecache -y ;;
     yum) sudo yum makecache -y ;;
     *)
-      echo "os::pkg_update: PKG_MANAGER не задан — вызови os::detect первым" >&2
+      log::err "os::pkg_update: PKG_MANAGER не задан — вызови os::detect первым"
       return 1
       ;;
   esac
@@ -85,7 +85,7 @@ os::pkg_update() {
 
 os::pkg_install() {
   if [ "$#" -eq 0 ]; then
-    echo "os::pkg_install: не переданы пакеты" >&2
+    log::err "os::pkg_install: не переданы пакеты"
     return 1
   fi
   case "$PKG_MANAGER" in
@@ -93,7 +93,7 @@ os::pkg_install() {
     dnf) sudo dnf install -y "$@" ;;
     yum) sudo yum install -y "$@" ;;
     *)
-      echo "os::pkg_install: PKG_MANAGER не задан — вызови os::detect первым" >&2
+      log::err "os::pkg_install: PKG_MANAGER не задан — вызови os::detect первым"
       return 1
       ;;
   esac
@@ -107,7 +107,7 @@ os::pkg_install() {
 # возврата пакетного менеджера — вызывать в условии (`if ... ; then`).
 os::pkg_try_install() {
   if [ "$#" -ne 1 ]; then
-    echo "os::pkg_try_install: ожидается ровно один пакет" >&2
+    log::err "os::pkg_try_install: ожидается ровно один пакет"
     return 1
   fi
   case "$PKG_MANAGER" in
@@ -115,7 +115,7 @@ os::pkg_try_install() {
     dnf) sudo dnf install -y "$1" ;;
     yum) sudo yum install -y "$1" ;;
     *)
-      echo "os::pkg_try_install: PKG_MANAGER не задан — вызови os::detect первым" >&2
+      log::err "os::pkg_try_install: PKG_MANAGER не задан — вызови os::detect первым"
       return 1
       ;;
   esac

@@ -23,7 +23,7 @@ set -euo pipefail
 
 extras::install_tldr() {
   epel::ensure
-  echo "extras: устанавливаю tldr"
+  log::info "extras: устанавливаю tldr"
   os::pkg_install tldr
 }
 
@@ -44,7 +44,7 @@ extras::install_fastfetch() {
 extras::install() {
   extras::install_tldr
   extras::install_fastfetch
-  echo "extras: готово."
+  log::info "extras: готово."
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

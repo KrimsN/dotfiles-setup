@@ -30,7 +30,7 @@ nvim::_arch() {
     x86_64) echo x86_64 ;;
     aarch64|arm64) echo arm64 ;;
     *)
-      echo "nvim: неподдерживаемая архитектура $(uname -m)" >&2
+      log::err "nvim: неподдерживаемая архитектура $(uname -m)"
       return 1
       ;;
   esac
@@ -38,7 +38,7 @@ nvim::_arch() {
 
 nvim::install_package() {
   if command -v nvim >/dev/null 2>&1; then
-    echo "nvim: уже установлен ($(command -v nvim)), пропускаю"
+    log::info "nvim: уже установлен ($(command -v nvim)), пропускаю"
     return 0
   fi
 
@@ -50,12 +50,12 @@ nvim::install_package() {
     | grep -E "nvim-linux-${arch}\.tar\.gz$")"
 
   if [ -z "$url" ]; then
-    echo "nvim: не удалось найти релизный архив для архитектуры $arch" >&2
+    log::err "nvim: не удалось найти релизный архив для архитектуры $arch"
     return 1
   fi
 
   tmp="$(mktemp -d)"
-  echo "nvim: скачиваю $url"
+  log::info "nvim: скачиваю $url"
   curl -fsSL "$url" -o "$tmp/nvim.tar.gz"
   tar -xzf "$tmp/nvim.tar.gz" -C "$tmp"
 
@@ -65,7 +65,7 @@ nvim::install_package() {
   # находит свой рантайм по относительному пути (../share/nvim/runtime)
   sudo cp -r "$src_dir"/. /usr/local/
   rm -rf "$tmp"
-  echo "nvim: установлен в /usr/local/bin/nvim ($("$(command -v nvim)" --version | head -n1))"
+  log::info "nvim: установлен в /usr/local/bin/nvim ($("$(command -v nvim)" --version | head -n1))"
 }
 
 nvim::write_config() {
@@ -81,12 +81,12 @@ nvim::write_config() {
 
   if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
     local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
-    echo "nvim: существующий ~/.config/nvim/init.lua отличается — делаю бэкап в $backup"
+    log::warn "nvim: существующий ~/.config/nvim/init.lua отличается — делаю бэкап в $backup"
     cp "$dest" "$backup"
   fi
 
   cp "$src" "$dest"
-  echo "nvim: ~/.config/nvim/init.lua обновлён"
+  log::info "nvim: ~/.config/nvim/init.lua обновлён"
 }
 
 nvim::install_plugins() {
@@ -94,7 +94,7 @@ nvim::install_plugins() {
   # сборка падает с "No C compiler found" (поймано при тестировании).
   os::pkg_install gcc >/dev/null
 
-  echo "nvim: устанавливаю плагины через lazy.nvim (headless)"
+  log::info "nvim: устанавливаю плагины через lazy.nvim (headless)"
   nvim --headless "+Lazy! sync" +qa
 }
 
@@ -102,7 +102,7 @@ nvim::install() {
   nvim::install_package
   nvim::write_config
   nvim::install_plugins
-  echo "nvim: готово."
+  log::info "nvim: готово."
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
