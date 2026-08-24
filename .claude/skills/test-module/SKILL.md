@@ -1,9 +1,9 @@
 ---
 name: test-module
-description: Test a dotfiles-setup module (or several) end-to-end in a disposable Docker container for a target distro, checking idempotency with a second run in the same container. Use whenever a module in modules/ or scripts/lib/ was added or changed, before considering it done.
+description: Test a .knrc module (or several) end-to-end in a disposable Docker container for a target distro, checking idempotency with a second run in the same container. Use whenever a module in modules/ or scripts/lib/ was added or changed, before considering it done.
 ---
 
-# Testing a dotfiles-setup module
+# Testing a .knrc module
 
 This project's modules are only "done" once they've been proven to work
 in a real container of the target distro — see "Как работать над этим
@@ -38,7 +38,7 @@ repeatable command instead of an ad hoc container each time.
    at the log:
    ```bash
    docker run --rm -it -v "$PWD:/repo:ro" ubuntu:24.04 bash
-   cp -r /repo /tmp/dotfiles-setup && cd /tmp/dotfiles-setup
+   cp -r /repo /tmp/knrc && cd /tmp/knrc
    DOTFILES_MODULES=<module-name> NONINTERACTIVE=1 ./install.sh
    ```
 6. Once the module passes, add a short **Тестирование** note to its

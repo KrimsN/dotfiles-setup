@@ -30,7 +30,7 @@ status-bar (имя сессии, список окон, дата/время, hos
 она есть, иначе создаёт новую; с явными аргументами (`tmux new -s foo` и
 т.п.) ведёт себя как обычно. Реализовано shell-функцией в
 `config/tmux-autoattach.sh`, которая ставится в
-`~/.config/dotfiles-setup/tmux-autoattach.sh` и подключается из
+`~/.config/knrc/tmux-autoattach.sh` и подключается из
 `~/.zshrc` (условная строка уже зашита в `config/zshrc` — работает
 независимо от порядка запуска zsh.sh/tmux.sh) и из `~/.bashrc` через
 `rcfile::upsert_block` (т.к. `.bashrc` не управляется целиком).

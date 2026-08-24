@@ -1,4 +1,4 @@
-# Managed by dotfiles-setup.
+# Managed by .knrc.
 # Этот файл копируется в ~/.zshrc модулем modules/zsh.sh. Если уже
 # существует и отличается — скрипт делает бэкап перед перезаписью
 # (см. zsh::write_zshrc), а не молча затирает.
@@ -29,8 +29,8 @@ source "$ZSH/oh-my-zsh.sh"
 
 # tmux: если модуль tmux.sh ставил хук авто-подключения к существующей
 # сессии — подключаем. Условно, чтобы zsh.sh не зависел от tmux.sh.
-[[ ! -f ~/.config/dotfiles-setup/tmux-autoattach.sh ]] || source ~/.config/dotfiles-setup/tmux-autoattach.sh
+[[ ! -f ~/.config/knrc/tmux-autoattach.sh ]] || source ~/.config/knrc/tmux-autoattach.sh
 
 # Личные алиасы: если модуль aliases.sh их ставил — подключаем.
 # Условно, чтобы zsh.sh не зависел от aliases.sh.
-[[ ! -f ~/.config/dotfiles-setup/aliases.sh ]] || source ~/.config/dotfiles-setup/aliases.sh
+[[ ! -f ~/.config/knrc/aliases.sh ]] || source ~/.config/knrc/aliases.sh

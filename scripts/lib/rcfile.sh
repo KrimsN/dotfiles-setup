@@ -11,8 +11,8 @@ set -euo pipefail
 # уникальным для каждого использования.
 rcfile::upsert_block() {
   local file="$1" marker="$2" content="$3"
-  local begin="# >>> dotfiles-setup:${marker} >>>"
-  local end="# <<< dotfiles-setup:${marker} <<<"
+  local begin="# >>> knrc:${marker} >>>"
+  local end="# <<< knrc:${marker} <<<"
 
   touch "$file"
 

@@ -10,7 +10,7 @@ docker и набор CLI-утилит (полный список — в [CLAUDE.
 ## Быстрый старт
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/KrimsN/dotfiles-setup/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/KrimsN/krimsnrc/master/install.sh | bash
 ```
 
 Скрипт сам поставит `git`/`curl`, если их ещё нет, склонирует репозиторий

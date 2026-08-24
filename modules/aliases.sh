@@ -6,7 +6,7 @@
 # Публичная точка входа: aliases::install
 #
 # Тот же паттерн, что и у tmux-хука (см. modules/tmux.sh): снипет
-# ставится в ~/.config/dotfiles-setup/aliases.sh, а подключается:
+# ставится в ~/.config/knrc/aliases.sh, а подключается:
 #   - из ~/.zshrc — строка уже зашита в config/zshrc (модуль zsh.sh
 #     пишет .zshrc целиком из шаблона);
 #   - из ~/.bashrc — управляемым блоком через rcfile::upsert_block.
@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-DOTFILES_STATE_DIR="${DOTFILES_STATE_DIR:-$HOME/.config/dotfiles-setup}"
+DOTFILES_STATE_DIR="${DOTFILES_STATE_DIR:-$HOME/.config/knrc}"
 
 aliases::_dotfiles_dir() {
   echo "${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"

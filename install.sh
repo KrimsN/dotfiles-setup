@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# dotfiles-setup — единая точка входа.
+# .knrc — единая точка входа.
 #
 # Быстрое развёртывание:
-#   curl -fsSL https://raw.githubusercontent.com/KrimsN/dotfiles-setup/master/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/KrimsN/krimsnrc/master/install.sh | bash
 #
 # Или из уже склонированного репозитория:
 #   ./install.sh
@@ -14,7 +14,7 @@
 #                                 модули без интерактивного меню
 #   DOTFILES_DIR=/path          — куда клонировать репозиторий при
 #                                 запуске через curl | bash
-#                                 (по умолчанию ~/.local/share/dotfiles-setup)
+#                                 (по умолчанию ~/.local/share/knrc)
 #
 # Модуль zsh-terminal-app НЕ входит в ALL_MODULES и не предлагается ни
 # в общей установке, ни в интерактивном меню — запускается только
@@ -42,8 +42,8 @@ log::info() { echo "${LOG_CYAN}▶ ${1}${LOG_RESET}"; }
 log::warn() { echo "${LOG_YELLOW}⚠ ${1}${LOG_RESET}" >&2; }
 log::err()  { echo "${LOG_RED}✖ ${1}${LOG_RESET}" >&2; }
 
-REPO_URL="${DOTFILES_REPO_URL:-https://github.com/KrimsN/dotfiles-setup.git}"
-DEFAULT_INSTALL_DIR="$HOME/.local/share/dotfiles-setup"
+REPO_URL="${DOTFILES_REPO_URL:-https://github.com/KrimsN/krimsnrc.git}"
+DEFAULT_INSTALL_DIR="$HOME/.local/share/knrc"
 ALL_MODULES=(base zsh tmux nvim aliases cli-tools git-ecosystem docker extras fonts)
 
 for arg in "$@"; do

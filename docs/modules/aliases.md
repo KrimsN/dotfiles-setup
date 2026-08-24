@@ -11,7 +11,7 @@
   `$HOME`.
 
 Не ставит никаких пакетов, только сам механизм подключения — тот же
-паттерн, что у tmux-хука: снипет в `~/.config/dotfiles-setup/aliases.sh`,
+паттерн, что у tmux-хука: снипет в `~/.config/knrc/aliases.sh`,
 подключается из `~/.zshrc` (статичная условная строка в `config/zshrc`) и
 `~/.bashrc` (через `rcfile::upsert_block`). Требует `scripts/lib/rcfile.sh`.
 

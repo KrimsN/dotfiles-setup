@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run one or more dotfiles-setup modules inside a disposable Docker
+# Run one or more .knrc modules inside a disposable Docker
 # container for a given distro, twice, to check idempotency.
 #
 # Usage:
@@ -63,8 +63,8 @@ docker run --rm \
         yum install -y sudo
       fi
     fi
-    cp -r /repo /tmp/dotfiles-setup
-    cd /tmp/dotfiles-setup
+    cp -r /repo /tmp/knrc
+    cd /tmp/knrc
     for i in $(seq 1 "$RUNS"); do
       echo "--- run $i/$RUNS ---"
       ./install.sh

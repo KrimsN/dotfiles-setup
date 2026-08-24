@@ -1,4 +1,4 @@
--- Managed by dotfiles-setup.
+-- Managed by .knrc.
 -- Копируется в ~/.config/nvim/init.lua модулем modules/nvim.sh. При
 -- отличии от уже существующего файла делается бэкап (см. nvim::write_config).
 

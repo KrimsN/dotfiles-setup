@@ -7,7 +7,7 @@
 #
 # По умолчанию голый `tmux` подключается к уже существующей сессии,
 # если она есть — см. config/tmux-autoattach.sh. Хук ставится в
-# ~/.config/dotfiles-setup/tmux-autoattach.sh и подключается:
+# ~/.config/knrc/tmux-autoattach.sh и подключается:
 #   - из ~/.zshrc — строка уже зашита в config/zshrc (модуль zsh.sh
 #     пишет .zshrc целиком из шаблона, ничего дополнительно делать не
 #     нужно, файл-хук просто должен существовать на диске);
@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-DOTFILES_STATE_DIR="${DOTFILES_STATE_DIR:-$HOME/.config/dotfiles-setup}"
+DOTFILES_STATE_DIR="${DOTFILES_STATE_DIR:-$HOME/.config/knrc}"
 
 tmux::_dotfiles_dir() {
   echo "${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
