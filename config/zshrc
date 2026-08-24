@@ -26,3 +26,7 @@ source "$ZSH/oh-my-zsh.sh"
 # Powerlevel10k сам запускает мастер настройки при первом интерактивном
 # запуске, если ~/.p10k.zsh ещё не существует.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# tmux: если модуль tmux.sh ставил хук авто-подключения к существующей
+# сессии — подключаем. Условно, чтобы zsh.sh не зависел от tmux.sh.
+[[ ! -f ~/.config/dotfiles-setup/tmux-autoattach.sh ]] || source ~/.config/dotfiles-setup/tmux-autoattach.sh
