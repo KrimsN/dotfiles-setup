@@ -5,9 +5,12 @@
 # с первого взгляда в потоке лога установки.
 # Не запускать напрямую — подключать через `source`.
 #
-# log::info <msg>  — обычное сообщение о прогрессе (bold cyan, stdout)
-# log::warn <msg>  — некритичное предупреждение / пропуск (bold yellow, stderr)
-# log::err  <msg>  — ошибка (bold red, stderr)
+# log::info   <msg> — обычное сообщение о прогрессе (bold cyan, stdout)
+# log::warn   <msg> — некритичное предупреждение / пропуск (bold yellow, stderr)
+# log::err    <msg> — ошибка (bold red, stderr)
+# log::prompt <msg> — текст перед вопросом к пользователю (bold purple,
+#                     stdout, без завершающего перевода строки — для
+#                     использования непосредственно перед `read -p`)
 #
 # Отключается автоматически, если вывод не терминал (например
 # перенаправлен в файл/CI) или задана переменная NO_COLOR.
@@ -28,9 +31,10 @@ if [ -z "${NO_COLOR:-}" ] && [ -t 1 ]; then
   LOG_CYAN=$'\033[1;36m'
   LOG_YELLOW=$'\033[1;33m'
   LOG_RED=$'\033[1;31m'
+  LOG_PURPLE=$'\033[1;35m'
   LOG_RESET=$'\033[0m'
 else
-  LOG_CYAN="" LOG_YELLOW="" LOG_RED="" LOG_RESET=""
+  LOG_CYAN="" LOG_YELLOW="" LOG_RED="" LOG_PURPLE="" LOG_RESET=""
 fi
 
 log::info() {
@@ -43,6 +47,10 @@ log::warn() {
 
 log::err() {
   echo "${LOG_RED}${LOG_TAG} ✖ ${1}${LOG_RESET}" >&2
+}
+
+log::prompt() {
+  printf '%s%s ? %s%s' "$LOG_PURPLE" "$LOG_TAG" "$1" "$LOG_RESET"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

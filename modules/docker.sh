@@ -55,7 +55,7 @@ docker::_want_user_in_group() {
   fi
 
   local answer
-  read -r -p "docker: добавить $USER в группу docker (запуск без sudo)? [y/N] " answer < /dev/tty || return 1
+  read -r -p "$(log::prompt "docker: добавить $USER в группу docker (запуск без sudo)? [y/N] ")" answer < /dev/tty || return 1
   case "$answer" in
     y|Y|yes|Yes) return 0 ;;
     *) return 1 ;;

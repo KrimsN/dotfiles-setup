@@ -96,7 +96,7 @@ zsh::_want_default_shell() {
   fi
 
   local answer
-  read -r -p "zsh: сделать zsh shell'ом по умолчанию (chsh)? [y/N] " answer < /dev/tty || return 1
+  read -r -p "$(log::prompt "zsh: сделать zsh shell'ом по умолчанию (chsh)? [y/N] ")" answer < /dev/tty || return 1
   case "$answer" in
     y|Y|yes|Yes) return 0 ;;
     *) return 1 ;;

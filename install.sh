@@ -200,11 +200,12 @@ install_sh::_selected_modules() {
   fi
 
   echo "" >&2
-  echo "Что установить?" >&2
+  log::prompt "Что установить?" >&2
+  echo "" >&2
   echo "  1) Всё (рекомендуется)" >&2
   echo "  2) Выбрать вручную" >&2
   local choice
-  read -r -p "Выбор [1]: " choice < /dev/tty || choice=""
+  read -r -p "$(log::prompt 'Выбор [1]: ')" choice < /dev/tty || choice=""
   choice="${choice:-1}"
 
   if [ "$choice" != "2" ]; then
@@ -214,7 +215,7 @@ install_sh::_selected_modules() {
 
   local selected=() answer m i=1
   for m in "${ALL_MODULES[@]}"; do
-    read -r -p "  [$i/${#ALL_MODULES[@]}] Установить '$m'? [Y/n] " answer < /dev/tty || answer=""
+    read -r -p "$(log::prompt "  [$i/${#ALL_MODULES[@]}] Установить '$m'? [Y/n] ")" answer < /dev/tty || answer=""
     case "$answer" in
       n|N|no|No) ;;
       *) selected+=("$m") ;;
