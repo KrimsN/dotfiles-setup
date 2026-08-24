@@ -124,7 +124,9 @@ zsh_terminal_app::install() {
 
   local zsh_path current_shell
   zsh_path="$(command -v zsh)"
-  current_shell="$(getent passwd "$USER" | cut -d: -f7)"
+  # $USER не гарантированно задана (например, в контейнерах CI) —
+  # берём фактическое имя пользователя через id.
+  current_shell="$(getent passwd "$(id -un)" | cut -d: -f7)"
   if [ "$current_shell" = "$zsh_path" ]; then
     log::info "zsh-terminal-app: zsh уже login-shell по умолчанию, отдельное приложение не нужно, пропускаю"
     return 0

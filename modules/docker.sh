@@ -54,8 +54,9 @@ docker::_want_user_in_group() {
     return 1
   fi
 
-  local answer
-  read -r -p "$(log::prompt "docker: добавить $USER в группу docker (запуск без sudo)? [y/N] ")" answer < /dev/tty || return 1
+  local answer current_user
+  current_user="$(id -un)"
+  read -r -p "$(log::prompt "docker: добавить $current_user в группу docker (запуск без sudo)? [y/N] ")" answer < /dev/tty || return 1
   case "$answer" in
     y|Y|yes|Yes) return 0 ;;
     *) return 1 ;;
@@ -63,14 +64,19 @@ docker::_want_user_in_group() {
 }
 
 docker::configure_user_group() {
-  if groups "$USER" | grep -qw docker; then
-    log::info "docker: $USER уже в группе docker, пропускаю"
+  # $USER не гарантированно задана (например, в контейнерах CI) —
+  # берём фактическое имя пользователя через id.
+  local current_user
+  current_user="$(id -un)"
+
+  if groups "$current_user" | grep -qw docker; then
+    log::info "docker: $current_user уже в группе docker, пропускаю"
     return 0
   fi
 
   if docker::_want_user_in_group; then
-    log::info "docker: добавляю $USER в группу docker"
-    sudo usermod -aG docker "$USER"
+    log::info "docker: добавляю $current_user в группу docker"
+    sudo usermod -aG docker "$current_user"
     log::info "docker: изменения группы применятся после перелогина"
   else
     log::info "docker: оставляю без добавления в группу (команды docker — через sudo)"

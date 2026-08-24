@@ -104,11 +104,14 @@ zsh::_want_default_shell() {
 }
 
 zsh::configure_shell() {
-  local zsh_path current_shell
+  local zsh_path current_shell current_user
   zsh_path="$(command -v zsh)"
+  # $USER не гарантированно задана (например, в контейнерах CI) —
+  # берём фактическое имя пользователя через id.
+  current_user="$(id -un)"
   # $SHELL не обновляется до перелогина, поэтому смотрим на passwd
   # напрямую — иначе повторный запуск всегда считает shell не сменённым.
-  current_shell="$(getent passwd "$USER" | cut -d: -f7)"
+  current_shell="$(getent passwd "$current_user" | cut -d: -f7)"
 
   if [ "$current_shell" = "$zsh_path" ]; then
     log::info "zsh: уже установлен как shell по умолчанию, пропускаю"
@@ -120,8 +123,8 @@ zsh::configure_shell() {
       log::info "zsh: добавляю $zsh_path в /etc/shells"
       echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
     fi
-    log::info "zsh: делаю zsh shell'ом по умолчанию для $USER"
-    sudo chsh -s "$zsh_path" "$USER"
+    log::info "zsh: делаю zsh shell'ом по умолчанию для $current_user"
+    sudo chsh -s "$zsh_path" "$current_user"
   else
     log::info "zsh: оставляю текущий login-shell без изменений (zsh доступен как альтернативный: $zsh_path)"
   fi
