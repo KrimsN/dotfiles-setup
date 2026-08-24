@@ -29,15 +29,24 @@ git_eco::install_gh_debian() {
 }
 
 git_eco::install_gh_rhel() {
-  os::pkg_install 'dnf-command(config-manager)' \
-    || log::warn "git-ecosystem: dnf-command(config-manager), возможно, уже доступен"
+  local repo_url="https://cli.github.com/packages/rpm/gh-cli.repo"
 
   case "$PKG_MANAGER" in
     dnf)
-      sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+      # Fedora 41+ (в т.ч. Fedora 44 в WSL) поставляет dnf5 под именем
+      # dnf; у dnf5 плагин config-manager — другой CLI (подкоманда
+      # addrepo вместо флага --add-repo), 'dnf-command(config-manager)'
+      # как отдельный пакет в dnf5 не существует.
+      if dnf --version 2>/dev/null | grep -q '^dnf5'; then
+        sudo dnf config-manager addrepo --from-repofile="$repo_url"
+      else
+        os::pkg_install 'dnf-command(config-manager)' \
+          || log::warn "git-ecosystem: dnf-command(config-manager), возможно, уже доступен"
+        sudo dnf config-manager --add-repo "$repo_url"
+      fi
       ;;
     yum)
-      sudo yum-config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+      sudo yum-config-manager --add-repo "$repo_url"
       ;;
   esac
 
