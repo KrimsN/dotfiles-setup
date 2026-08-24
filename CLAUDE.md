@@ -60,6 +60,14 @@ tmux, TPM, tmux-resurrect, tmux-continuum
 ### Контейнеры
 docker (docker compose входит в современный docker, отдельно не ставить)
 
+### Python
+uv (менеджер пакетов и версий Python, официальный `curl | sh`-инсталлер
+astral.sh) + ruff (линтер/форматтер, ставится через `uv tool install`).
+Toolchain Rust (rustup/cargo/rustc) исключён — решение пользователя, uv
+и ruff это готовые бинарники, компилятор не нужен. Отдельные
+pyenv/pipx/poetry не ставятся — их функциональность покрывает uv. См.
+modules/python-tools.sh.
+
 ### Прочее
 tldr, fastfetch — изначально был выбран neofetch, но проект archived и
 убран из репозиториев Fedora; заменён на fastfetch (активно
@@ -99,8 +107,9 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
 ## Статус
 
 Проект функционально завершён: все модули из списка программ написаны
-и протестированы (10 модулей в ALL_MODULES, включая nvim; плюс
-опциональный zsh-terminal-app вне ALL_MODULES), есть единый лаунчер
+и протестированы (11 модулей в ALL_MODULES, включая nvim и
+python-tools; плюс опциональный zsh-terminal-app вне ALL_MODULES), есть
+единый лаунчер
 `install.sh`, работающий как через `curl | bash` на чистой машине (без
 git/curl), так и из склонированного репозитория.
 
@@ -120,6 +129,7 @@ git/curl), так и из склонированного репозитория.
 | `modules/cli-tools.sh` | [docs/modules/cli-tools.md](docs/modules/cli-tools.md) |
 | `modules/git-ecosystem.sh` | [docs/modules/git-ecosystem.md](docs/modules/git-ecosystem.md) |
 | `modules/docker.sh` | [docs/modules/docker.md](docs/modules/docker.md) |
+| `modules/python-tools.sh` | [docs/modules/python-tools.md](docs/modules/python-tools.md) |
 | `scripts/lib/epel.sh` | [docs/modules/epel.md](docs/modules/epel.md) |
 | `modules/base.sh` | [docs/modules/base.md](docs/modules/base.md) |
 | `scripts/lib/github-release.sh` | [docs/modules/github-release.md](docs/modules/github-release.md) |
