@@ -37,7 +37,7 @@
 ## Список программ (зафиксировано пользователем)
 
 ### Базовый набор
-git, curl, wget, vim, neovim, htop, btop, tree, unzip, zip
+git, curl, wget, vim, neovim, htop, btop, tree, unzip, zip, diffutils
 
 ### CLI-инструменты нового поколения
 ripgrep (rg), fd, fzf, bat, eza, zoxide, delta, jq, httpie, curlie
@@ -96,8 +96,10 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
   внешних плагина (zsh-autosuggestions, fast-syntax-highlighting,
   zsh-completions) через `git clone --depth=1` в `$ZSH_CUSTOM`, пишет
   `~/.zshrc` из `config/zshrc` (с бэкапом старого файла при отличии —
-  сравнение через `cat`, а не `cmp`/`diff`, т.к. они не всегда есть в
-  минимальных образах) и опционально делает zsh login-shell'ом по
+  сравнение через `cmp`; т.к. `diffutils` не всегда стоит в минимальных
+  образах, модуль сам ставит его перед сравнением через
+  `os::pkg_install diffutils`, идемпотентно) и опционально делает zsh
+  login-shell'ом по
   умолчанию через `chsh` — вопрос задаётся через `/dev/tty`
   (`zsh::_want_default_shell`) по схеме из "Механизм конфигурации",
   с env-override `ZSH_DEFAULT_SHELL=yes|no` и безопасным дефолтом "no"

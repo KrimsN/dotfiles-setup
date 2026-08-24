@@ -65,7 +65,12 @@ zsh::write_zshrc() {
   local src="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}/config/zshrc"
   local dest="$HOME/.zshrc"
 
-  if [ -f "$dest" ] && [ "$(cat "$src")" != "$(cat "$dest")" ]; then
+  # cmp — часть diffutils, не всегда стоит в минимальных образах; ставим
+  # заранее (идемпотентно — пакетный менеджер просто ничего не сделает,
+  # если пакет уже есть).
+  os::pkg_install diffutils >/dev/null
+
+  if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
     local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
     echo "zsh: существующий ~/.zshrc отличается — делаю бэкап в $backup"
     cp "$dest" "$backup"
