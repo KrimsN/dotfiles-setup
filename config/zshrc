@@ -7,6 +7,12 @@ export ZSH="$HOME/.oh-my-zsh"
 
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
+# Кэш автодополнения — до compinit (запускается внутри oh-my-zsh.sh),
+# чтобы применился с первого запуска.
+mkdir -p "$HOME/.zsh/cache"
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path "$HOME/.zsh/cache"
+
 plugins=(
   git
   sudo
@@ -27,6 +33,22 @@ source "$ZSH/oh-my-zsh.sh"
 # запуске, если ~/.p10k.zsh ещё не существует.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# История команд: расширенный размер, общий между сессиями, без дублей.
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+
+setopt APPEND_HISTORY           # дописывать, а не перезаписывать
+setopt SHARE_HISTORY            # общая история между сессиями
+setopt HIST_IGNORE_DUPS         # не писать повторы подряд
+setopt HIST_IGNORE_ALL_DUPS     # убирать старые дубли при повторе
+setopt HIST_SAVE_NO_DUPS        # не сохранять дубли в файл
+setopt HIST_FIND_NO_DUPS        # пропускать дубли при поиске по истории
+
+# Стрелки вверх/вниз ищут по префиксу уже введённой команды.
+bindkey '^[[A' history-beginning-search-backward
+bindkey '^[[B' history-beginning-search-forward
+
 # tmux: если модуль tmux.sh ставил хук авто-подключения к существующей
 # сессии — подключаем. Условно, чтобы zsh.sh не зависел от tmux.sh.
 [[ ! -f ~/.config/knrc/tmux-autoattach.sh ]] || source ~/.config/knrc/tmux-autoattach.sh
@@ -34,3 +56,28 @@ source "$ZSH/oh-my-zsh.sh"
 # Личные алиасы: если модуль aliases.sh их ставил — подключаем.
 # Условно, чтобы zsh.sh не зависел от aliases.sh.
 [[ ! -f ~/.config/knrc/aliases.sh ]] || source ~/.config/knrc/aliases.sh
+
+# PATH для uv/ruff (~/.local/bin): если модуль python-tools.sh его
+# ставил — подключаем. Условно, чтобы zsh.sh не зависел от
+# python-tools.sh.
+[[ ! -f ~/.config/knrc/path.sh ]] || source ~/.config/knrc/path.sh
+
+# fzf/zoxide: интеграция с шеллом, если бинарники уже поставлены
+# модулем cli-tools.sh. Guard на command -v, чтобы zsh.sh не зависел
+# от порядка установки модулей.
+#
+# fzf: `fzf --zsh` появился в 0.48 (2024) и печатает готовый
+# init-скрипт. На Debian/Ubuntu из apt может стоять более старая
+# версия (например 0.44 на Ubuntu 24.04) без этого флага — тогда
+# используем биндинги, которые пакет всё равно кладёт на диск.
+if command -v fzf >/dev/null 2>&1; then
+  if _fzf_zsh_init="$(fzf --zsh 2>/dev/null)"; then
+    eval "$_fzf_zsh_init"
+  else
+    [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]] && source /usr/share/doc/fzf/examples/key-bindings.zsh
+    [[ -f /usr/share/doc/fzf/examples/completion.zsh ]] && source /usr/share/doc/fzf/examples/completion.zsh
+  fi
+  unset _fzf_zsh_init
+fi
+
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
