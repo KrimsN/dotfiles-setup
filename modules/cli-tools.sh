@@ -11,7 +11,13 @@
 # Стратегия установки:
 #   - ripgrep, fd, fzf, bat, jq, httpie — через пакетный менеджер
 #     (для rhel-семейства предварительно включаем EPEL через
-#     epel::ensure, там живёт большинство из них).
+#     epel::ensure, там живёт большинство из них). Если конкретный
+#     пакет недоступен (например на машине подменены репозитории на
+#     внутренние корпоративные без части пакетов) — ставится по
+#     отдельности через os::pkg_try_install, и при ненулевом коде
+#     возврата модуль сам переключается на fallback для этого пакета
+#     (GitHub Releases или pip), не роняя установку остальных
+#     инструментов. См. cli::fallback.
 #   - eza, delta, curlie, zoxide — их нет (или нет везде/во всех
 #     версиях) в стандартных репах целевых дистрибутивов, поэтому
 #     ставим статическими musl-бинарниками напрямую с GitHub Releases
@@ -43,10 +49,71 @@ cli::install_zoxide() {
     "zoxide-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "zoxide" "zoxide"
 }
 
+cli::fallback_ripgrep() {
+  github_release::install "BurntSushi/ripgrep" \
+    "ripgrep-.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "rg" "rg"
+}
+
+cli::fallback_fd() {
+  github_release::install "sharkdp/fd" \
+    "fd-v.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "fd" "fd"
+}
+
+cli::fallback_fzf() {
+  github_release::install "junegunn/fzf" \
+    "fzf-.*-linux_$(github_release::arch_go)\.tar\.gz$" "fzf" "fzf"
+}
+
+cli::fallback_bat() {
+  github_release::install "sharkdp/bat" \
+    "bat-v.*-$(github_release::arch_rust)-unknown-linux-musl\.tar\.gz$" "bat" "bat"
+}
+
+cli::fallback_jq() {
+  # jq публикует голые бинарники (не архивы), inner_path_glob не нужен.
+  github_release::install "jqlang/jq" "jq-linux-$(github_release::arch_go)$" "" "jq"
+}
+
+cli::fallback_httpie() {
+  # У httpie нет статических бинарников на GitHub Releases (это
+  # python-пакет) — ставим через pip как альтернативу пакетному
+  # менеджеру.
+  echo "cli-tools: httpie недоступен через $PKG_MANAGER — ставлю через pip"
+  command -v pip3 >/dev/null 2>&1 || os::pkg_install python3-pip
+  pip3 install --user httpie
+}
+
+# cli::fallback <pkg> — резервная установка для одного пакета из
+# cli::install_pkg_group, когда os::pkg_try_install вернул ненулевой
+# код (пакета нет в текущих репозиториях, например на машине с
+# подменёнными внутренними/корпоративными репозиториями).
+cli::fallback() {
+  case "$1" in
+    ripgrep) cli::fallback_ripgrep ;;
+    fd-find) cli::fallback_fd ;;
+    fzf) cli::fallback_fzf ;;
+    bat) cli::fallback_bat ;;
+    jq) cli::fallback_jq ;;
+    httpie) cli::fallback_httpie ;;
+    *)
+      echo "cli-tools: нет fallback-стратегии для пакета '$1' — пропускаю" >&2
+      return 1
+      ;;
+  esac
+}
+
 cli::install_pkg_group() {
   epel::ensure
   echo "cli-tools: устанавливаю ripgrep, fd, fzf, bat, jq, httpie через пакетный менеджер"
-  os::pkg_install ripgrep fzf jq httpie bat fd-find
+  local pkg
+  for pkg in ripgrep fzf jq httpie bat fd-find; do
+    if os::pkg_try_install "$pkg"; then
+      echo "cli-tools: $pkg установлен через $PKG_MANAGER"
+    else
+      echo "cli-tools: $pkg недоступен через $PKG_MANAGER — пробую fallback" >&2
+      cli::fallback "$pkg"
+    fi
+  done
 }
 
 # fd-find и bat на Debian/Ubuntu ставят бинарники под именами fdfind и

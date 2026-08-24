@@ -99,6 +99,28 @@ os::pkg_install() {
   esac
 }
 
+# os::pkg_try_install <pkg> — установить один пакет, не прерывая скрипт
+# при неудаче (в отличие от os::pkg_install под `set -e`). Нужен там,
+# где на неудачу пакетного менеджера (пакет переименован/отсутствует в
+# кастомном/корпоративном репозитории) есть alternative-стратегия
+# установки — см. cli::fallback в modules/cli-tools.sh. Возвращает код
+# возврата пакетного менеджера — вызывать в условии (`if ... ; then`).
+os::pkg_try_install() {
+  if [ "$#" -ne 1 ]; then
+    echo "os::pkg_try_install: ожидается ровно один пакет" >&2
+    return 1
+  fi
+  case "$PKG_MANAGER" in
+    apt) sudo apt-get install -y "$1" ;;
+    dnf) sudo dnf install -y "$1" ;;
+    yum) sudo yum install -y "$1" ;;
+    *)
+      echo "os::pkg_try_install: PKG_MANAGER не задан — вызови os::detect первым" >&2
+      return 1
+      ;;
+  esac
+}
+
 # Если скрипт запущен напрямую (а не через source) — просто печатаем
 # результат детекции. Удобно для быстрой проверки: ./os-detect.sh
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

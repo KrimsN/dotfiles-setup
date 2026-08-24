@@ -32,7 +32,9 @@ github_release::arch_go() {
 # (например fastfetch) содержат несколько файлов с одинаковым базовым
 # именем (бинарник и shell-completion), поэтому чистого `-name`
 # недостаточно; для точного совпадения передавать что-то вроде
-# "usr/bin/tool", а не просто "tool".
+# "usr/bin/tool", а не просто "tool". Если ассет — не .tar.gz, а голый
+# бинарник (например jq публикует именно так), inner_path_glob
+# игнорируется — можно передать пустую строку.
 github_release::install() {
   local repo="$1" asset_regex="$2" inner_path_glob="$3" target_name="$4"
 
@@ -55,12 +57,18 @@ github_release::install() {
   local tmp
   tmp="$(mktemp -d)"
   echo "github-release: скачиваю $target_name: $url"
-  curl -fsSL "$url" -o "$tmp/asset.tar.gz"
-  tar -xzf "$tmp/asset.tar.gz" -C "$tmp"
 
   local bin_path
-  bin_path="$(find "$tmp" -type f -path "*$inner_path_glob" | head -n1)"
-  if [ -z "$bin_path" ]; then
+  if [[ "$url" == *.tar.gz ]]; then
+    curl -fsSL "$url" -o "$tmp/asset.tar.gz"
+    tar -xzf "$tmp/asset.tar.gz" -C "$tmp"
+    bin_path="$(find "$tmp" -type f -path "*$inner_path_glob" | head -n1)"
+  else
+    curl -fsSL "$url" -o "$tmp/$target_name"
+    bin_path="$tmp/$target_name"
+  fi
+
+  if [ -z "$bin_path" ] || [ ! -f "$bin_path" ]; then
     echo "github-release: бинарник '$inner_path_glob' не найден в архиве $target_name" >&2
     rm -rf "$tmp"
     return 1
