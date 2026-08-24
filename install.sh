@@ -30,6 +30,7 @@ set -euo pipefail
 # см. install_sh::_bootstrap_git_curl ниже), поэтому подключить
 # scripts/lib/log.sh отсюда невозможно. Та же причина дублирования, что
 # и у логики определения дистрибутива чуть ниже.
+LOG_TAG="[.knrc]"
 if [ -z "${NO_COLOR:-}" ] && [ -t 1 ]; then
   LOG_CYAN=$'\033[1;36m'
   LOG_YELLOW=$'\033[1;33m'
@@ -38,9 +39,29 @@ if [ -z "${NO_COLOR:-}" ] && [ -t 1 ]; then
 else
   LOG_CYAN="" LOG_YELLOW="" LOG_RED="" LOG_RESET=""
 fi
-log::info() { echo "${LOG_CYAN}▶ ${1}${LOG_RESET}"; }
-log::warn() { echo "${LOG_YELLOW}⚠ ${1}${LOG_RESET}" >&2; }
-log::err()  { echo "${LOG_RED}✖ ${1}${LOG_RESET}" >&2; }
+log::info() { echo "${LOG_CYAN}${LOG_TAG} ▶ ${1}${LOG_RESET}"; }
+log::warn() { echo "${LOG_YELLOW}${LOG_TAG} ⚠ ${1}${LOG_RESET}" >&2; }
+log::err()  { echo "${LOG_RED}${LOG_TAG} ✖ ${1}${LOG_RESET}" >&2; }
+
+# ASCII-баннер ".KNRC" — печатается один раз в начале установки, чтобы
+# сразу было видно, какой скрипт выполняется (актуально для `curl | bash`,
+# где лог начинается посреди чужого вывода curl).
+install_sh::_banner() {
+  printf '%s' "$LOG_CYAN"
+  cat <<'BANNER'
+    █████   ████            ███                          ██████   █████
+   ░░███   ███░            ░░░                          ░░██████ ░░███
+    ░███  ███    ████████  ████  █████████████    █████  ░███░███ ░███  ████████   ██████
+    ░███████    ░░███░░███░░███ ░░███░░███░░███  ███░░   ░███░░███░███ ░░███░░███ ███░░███
+    ░███░░███    ░███ ░░░  ░███  ░███ ░███ ░███ ░░█████  ░███ ░░██████  ░███ ░░░ ░███ ░░░
+    ░███ ░░███   ░███      ░███  ░███ ░███ ░███  ░░░░███ ░███  ░░█████  ░███     ░███  ███
+ ██ █████ ░░████ █████     █████ █████░███ █████ ██████  █████  ░░█████ █████    ░░██████
+░░ ░░░░░   ░░░░ ░░░░░     ░░░░░ ░░░░░ ░░░ ░░░░░ ░░░░░░  ░░░░░    ░░░░░ ░░░░░      ░░░░░░
+BANNER
+  echo "        unix-окружение в одну команду: zsh · tmux · nvim · p10k"
+  printf '%s' "$LOG_RESET"
+  echo ""
+}
 
 REPO_URL="${DOTFILES_REPO_URL:-https://github.com/KrimsN/krimsnrc.git}"
 DEFAULT_INSTALL_DIR="$HOME/.local/share/knrc"
@@ -201,6 +222,8 @@ install_sh::_run_module() {
 }
 
 install_sh::main() {
+  install_sh::_banner
+
   local repo_dir
   repo_dir="$(install_sh::_ensure_repo)"
   export DOTFILES_DIR="$repo_dir"
