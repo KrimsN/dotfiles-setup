@@ -2,14 +2,15 @@
 # Установка CLI-инструментов нового поколения:
 # ripgrep, fd, fzf, bat, eza, zoxide, delta, jq, httpie, curlie.
 # Не запускать напрямую — подключать через `source` после
-# scripts/lib/os-detect.sh (нужны OS_FAMILY, os::pkg_install).
+# scripts/lib/os-detect.sh и scripts/lib/epel.sh (нужны OS_FAMILY,
+# os::pkg_install, epel::ensure).
 #
 # Публичная точка входа: cli::install
 #
 # Стратегия установки:
 #   - ripgrep, fd, fzf, bat, jq, httpie — через пакетный менеджер
-#     (для rhel-семейства предварительно включаем EPEL, там живёт
-#     большинство из них).
+#     (для rhel-семейства предварительно включаем EPEL через
+#     epel::ensure, там живёт большинство из них).
 #   - eza, delta, curlie, zoxide — их нет (или нет везде/во всех
 #     версиях) в стандартных репах целевых дистрибутивов, поэтому
 #     ставим статическими musl-бинарниками напрямую с GitHub Releases
@@ -94,28 +95,8 @@ cli::install_zoxide() {
     "zoxide-.*-$(cli::_arch_rust)-unknown-linux-musl\.tar\.gz$" "zoxide" "zoxide"
 }
 
-cli::install_epel() {
-  if [ "$OS_FAMILY" != "rhel" ]; then
-    return 0
-  fi
-  if rpm -q epel-release >/dev/null 2>&1; then
-    echo "cli-tools: EPEL уже включён, пропускаю"
-    return 0
-  fi
-  echo "cli-tools: включаю EPEL"
-  os::pkg_install epel-release \
-    || { echo "cli-tools: не удалось установить epel-release, продолжаю без него" >&2; return 0; }
-
-  # Часть пакетов EPEL (например httpie) зависит от пакетов из CRB
-  # (CodeReady Builder) — на CentOS Stream он не включён по умолчанию.
-  if command -v crb >/dev/null 2>&1; then
-    echo "cli-tools: включаю репозиторий CRB"
-    sudo crb enable || echo "cli-tools: не удалось включить CRB, продолжаю без него" >&2
-  fi
-}
-
 cli::install_pkg_group() {
-  cli::install_epel
+  epel::ensure
   echo "cli-tools: устанавливаю ripgrep, fd, fzf, bat, jq, httpie через пакетный менеджер"
   os::pkg_install ripgrep fzf jq httpie bat fd-find
 }
