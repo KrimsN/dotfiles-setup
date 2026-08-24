@@ -14,10 +14,10 @@
 
 *(короткое название: `.knrc`)*
 
-[![Ubuntu](https://github.com/KrimsN/krimsnrc/actions/workflows/test-ubuntu.yml/badge.svg)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-ubuntu.yml)
-[![Debian](https://github.com/KrimsN/krimsnrc/actions/workflows/test-debian.yml/badge.svg)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-debian.yml)
-[![Fedora](https://github.com/KrimsN/krimsnrc/actions/workflows/test-fedora.yml/badge.svg)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-fedora.yml)
-[![CentOS](https://github.com/KrimsN/krimsnrc/actions/workflows/test-centos.yml/badge.svg)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-centos.yml)
+[![Ubuntu 24.04](https://img.shields.io/github/actions/workflow/status/KrimsN/krimsnrc/test-ubuntu.yml?label=Ubuntu%2024.04&logo=ubuntu&logoColor=white&labelColor=E95420&style=flat)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-ubuntu.yml)
+[![Debian 12](https://img.shields.io/github/actions/workflow/status/KrimsN/krimsnrc/test-debian.yml?label=Debian%2012&logo=debian&logoColor=white&labelColor=A81D33&style=flat)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-debian.yml)
+[![Fedora Latest](https://img.shields.io/github/actions/workflow/status/KrimsN/krimsnrc/test-fedora.yml?label=Fedora%20Latest&logo=fedora&logoColor=white&labelColor=51A2DA&style=flat)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-fedora.yml)
+[![CentOS Stream 9](https://img.shields.io/github/actions/workflow/status/KrimsN/krimsnrc/test-centos.yml?label=CentOS%20Stream%209&logo=centos&logoColor=white&labelColor=262577&style=flat)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-centos.yml)
 
 Набор скриптов для быстрой настройки unix-окружения на Ubuntu, Debian,
 Fedora и CentOS: zsh + oh-my-zsh + Powerlevel10k (+ Nerd Font-шрифты),
