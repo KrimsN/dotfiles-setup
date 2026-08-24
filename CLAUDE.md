@@ -38,6 +38,8 @@
 
 ### Базовый набор
 git, curl, wget, vim, neovim, htop, btop, tree, unzip, zip, diffutils
+— neovim ставится не пакетом, а свежим бинарником с GitHub Releases +
+конфиг + lazy.nvim, см. "### Neovim" ниже и modules/nvim.sh.
 
 ### CLI-инструменты нового поколения
 ripgrep (rg), fd, fzf, bat, eza, zoxide, delta, jq, httpie, curlie
@@ -59,6 +61,12 @@ tldr, fastfetch — изначально был выбран neofetch, но пр
 убран из репозиториев Fedora; заменён на fastfetch (активно
 поддерживаемый форк) единообразно на всех дистрибутивах — решение
 пользователя, см. modules/extras.sh.
+
+### Neovim
+Конфиг (init.lua) + менеджер плагинов (lazy.nvim) + базовый набор
+плагинов: дерево файлов, статус-бар, нечёткий поиск, treesitter,
+цветовая схема. LSP/автодополнение исключены — решение пользователя,
+пока не нужны. См. modules/nvim.sh.
 
 ### Тема промпта
 Powerlevel10k — обязательна, не опциональна.
@@ -87,9 +95,11 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
 ## Статус
 
 Проект функционально завершён: все модули из списка программ написаны
-и протестированы (9 модулей, включая шрифты — modules/fonts.sh), есть
-единый лаунчер `install.sh`, работающий как через `curl | bash` на
-чистой машине (без git/curl), так и из склонированного репозитория.
+и протестированы (10 модулей в ALL_MODULES, включая nvim —
+modules/nvim.sh; плюс опциональный zsh-terminal-app вне ALL_MODULES),
+есть единый лаунчер `install.sh`, работающий как через `curl | bash`
+на чистой машине (без git/curl), так и из склонированного
+репозитория.
 
 ### Реализованные модули
 
@@ -142,6 +152,18 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
   Требует `scripts/lib/os-detect.sh` и `scripts/lib/rcfile.sh`
   (`source` перед этим модулем).
 
+  **Содержимое `config/tmux.conf`** (дополнено 2026-08-24, помимо
+  `mouse on`, который был с самого начала): `history-limit 50000`,
+  `escape-time 0` (без задержки после Esc — важно для vim/nvim внутри
+  tmux), `renumber-windows on`, `focus-events on`,
+  `default-terminal 'tmux-256color'` + `terminal-overrides` для
+  true-color; удобные сплиты `|`/`-` (сохраняют `pane_current_path`,
+  заменяют дефолтные `%`/`"`), `prefix + r` — reload конфига без
+  выхода из tmux; кастомный status-bar (имя сессии, список окон,
+  дата/время, hostname) вместо дефолтного минималистичного. Vi-style
+  keys в copy-mode осознанно не добавлены — пользователь их не
+  запрашивал.
+
   **Поведение по умолчанию (зафиксировано пользователем):** голый
   `tmux` без аргументов подключается к уже существующей сессии, если
   она есть, иначе создаёт новую; с явными аргументами (`tmux new -s
@@ -158,6 +180,47 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
   реальным pty (`script`) — bare `tmux` подключается к существующей
   сессии вместо создания новой, а `tmux new -s <name>` по-прежнему
   создаёт отдельную сессию.
+
+- **`modules/nvim.sh`** — конфиг Neovim: `~/.config/nvim/init.lua` из
+  `config/nvim/init.lua` (та же схема бэкапа через `cmp`, что и у
+  zsh/tmux) + lazy.nvim (менеджер плагинов, bootstrap в самом
+  init.lua через `git clone`) + базовый набор плагинов: nvim-tree
+  (дерево файлов, `<leader>e`), lualine (статус-бар), telescope+plenary
+  (нечёткий поиск, `<leader>ff/fg/fb`), nvim-treesitter (подсветка на
+  основе AST), tokyonight (цветовая схема). LSP и автодополнение
+  сознательно не включены — отдельный, более тяжёлый шаг
+  (nvim-lspconfig + mason), не входит в текущий базовый уровень.
+
+  **Бинарник ставится с GitHub Releases, а не из пакетного менеджера**
+  (`nvim::install_package` в модуле, не `os::pkg_install`) — решение
+  пользователя. Причина: neovim в репозиториях Ubuntu/Debian сильно
+  устаревший (0.9.5), там ещё нет `vim.uv` (появился в 0.10), от
+  которого зависит bootstrap lazy.nvim. По той же причине это не
+  `github_release::install` из `scripts/lib/github-release.sh` (тот
+  рассчитан на самодостаточный статический бинарник вроде
+  eza/delta/curlie) — релизный архив neovim это дерево
+  `bin/+lib/+share/` (бинарнику в рантайме нужны файлы из
+  `share/nvim/runtime`), распаковывается целиком поверх `/usr/local`.
+  Т.к. свежий neovim теперь ставит этот модуль, `neovim` убран из
+  пакетного списка `modules/base.sh` (дублирования не делаем, тот же
+  принцип, что и с `git-delta`/`gh` в других модулях).
+
+  **`nvim::install_plugins` ставит `gcc` перед `Lazy! sync`** —
+  реальный баг, пойманный при тестировании: nvim-treesitter
+  компилирует парсеры через `:TSUpdate`, без C-компилятора сборка
+  падает с "No C compiler found". Также nvim-treesitter в конфиге
+  закреплён на `branch = 'master'` (не `main`) — ещё один реальный баг
+  при тестировании: `main` это переписанный в 2025 новый мажор без
+  `require('nvim-treesitter.configs').setup()`, с другим API;
+  `master` — поддерживаемая legacy-ветка со старым простым API,
+  которым и пользуется конфиг.
+
+  Требует `scripts/lib/os-detect.sh` (`os::pkg_install` для
+  `diffutils`/`gcc`). Протестирован end-to-end в контейнере
+  Ubuntu 24.04: установка с нуля (включая скачивание бинарника и
+  headless-синхронизацию всех плагинов без ошибок), идемпотентность
+  (повторный запуск), бэкап конфига при локальном отличии, и полный
+  прогон через `install.sh` (`DOTFILES_MODULES=nvim`).
 
 - **`modules/aliases.sh`** — личные алиасы пользователя (зафиксировано
   пользователем, список может пополняться — новые добавлять в
@@ -267,15 +330,18 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
   теперь `scripts/lib/epel.sh` нужно подключать перед `cli-tools.sh` и
   `base.sh`.
 
-- **`modules/base.sh`** — базовый набор: git, curl, wget, vim, neovim,
+- **`modules/base.sh`** — базовый набор: git, curl, wget, vim,
   htop, btop, tree, unzip, zip, diffutils — одним вызовом
-  `os::pkg_install` после `epel::ensure` (neovim и btop на CentOS живут
-  только в EPEL, остальное — в базовых репах везде). Требует
+  `os::pkg_install` после `epel::ensure` (btop на CentOS живёт
+  только в EPEL, остальное — в базовых репах везде). `neovim` в этот
+  список больше не входит (был здесь изначально) — свежий бинарник
+  теперь ставит отдельный `modules/nvim.sh` с GitHub Releases, см.
+  ниже, пакетную версию не дублируем. Требует
   `scripts/lib/os-detect.sh` и `scripts/lib/epel.sh`.
 
   Протестирован end-to-end на Ubuntu 24.04 (включая идемпотентность),
   Fedora (актуальная), CentOS Stream 9 (подтверждён путь через EPEL для
-  neovim/btop) и Debian 12 — на Debian дополнительно перепроверено, что
+  btop) и Debian 12 — на Debian дополнительно перепроверено, что
   `cli-tools.sh` продолжает работать после рефакторинга EPEL в общую
   библиотеку.
 
@@ -386,6 +452,39 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
   `fc-list` подтверждает оба шрифта) на Ubuntu 24.04 и Fedora
   (актуальная), плюс прогон через сам `install.sh`
   (`DOTFILES_MODULES=fonts`).
+
+- **`modules/zsh-terminal-app.sh`** — отдельный опциональный модуль
+  (зафиксировано пользователем): создаёт `.desktop`-приложение
+  "терминал сразу в zsh" и, только в GNOME, перевешивает глобальный
+  хоткей Ctrl+T на его запуск. Смысл — если zsh поставлен модулем
+  `zsh.sh`, но пользователь ответил "нет" на смену login-shell'а по
+  умолчанию (`ZSH_DEFAULT_SHELL=no`), даёт быстрый доступ к zsh без
+  `chsh`.
+
+  **Не входит в `ALL_MODULES`** в `install.sh` и поэтому не
+  предлагается ни в общей установке ("всё"), ни в интерактивном меню
+  ручного выбора — запускается только явно:
+  `DOTFILES_MODULES=zsh-terminal-app ./install.sh`. Решение
+  пользователя: этот модуль — по запросу, а не часть стандартного
+  флоу.
+
+  Терминальный эмулятор определяется автоматически: сначала `$TERMINAL`
+  (если задан и существует), иначе перебор известных по приоритету
+  (gnome-terminal, konsole, xfce4-terminal, tilix, alacritty, kitty,
+  xterm) — синтаксис передачи команды у них разный (`--` у
+  gnome-terminal/tilix, `-e` у остальных), учтено отдельной функцией.
+  Модуль идемпотентен: пропускается, если zsh уже login-shell по
+  умолчанию (сравнение через `getent passwd`, как в `zsh.sh`), и не
+  создаёт дублирующий хоткей при повторном запуске (поиск по команде
+  среди существующих `customN`-слотов).
+
+  Переназначение Ctrl+T реализовано через `gsettings` и relocatable
+  schema `org.gnome.settings-daemon.plugins.media-keys.custom-keybinding`
+  — работает только в GNOME, определяется по `$XDG_CURRENT_DESKTOP`.
+  Для остальных DE (KDE и т.п.) единого механизма нет — модуль
+  best-effort печатает готовую команду и просит настроить хоткей
+  вручную в настройках DE (тот же принцип, что и с выбором шрифта в
+  терминальном эмуляторе, см. `modules/fonts.sh`).
 
 ## Архитектурные принципы (для будущей реализации)
 

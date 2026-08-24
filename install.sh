@@ -15,12 +15,19 @@
 #   DOTFILES_DIR=/path          — куда клонировать репозиторий при
 #                                 запуске через curl | bash
 #                                 (по умолчанию ~/.local/share/dotfiles-setup)
+#
+# Модуль zsh-terminal-app НЕ входит в ALL_MODULES и не предлагается ни
+# в общей установке, ни в интерактивном меню — запускается только
+# явно: DOTFILES_MODULES=zsh-terminal-app ./install.sh. Он создаёт
+# приложение "терминал сразу в zsh" и хоткей для случая, когда zsh
+# установлен, но не стал login-shell'ом по умолчанию (см.
+# modules/zsh-terminal-app.sh).
 
 set -euo pipefail
 
 REPO_URL="${DOTFILES_REPO_URL:-https://github.com/KrimsN/dotfiles-setup.git}"
 DEFAULT_INSTALL_DIR="$HOME/.local/share/dotfiles-setup"
-ALL_MODULES=(base zsh tmux aliases cli-tools git-ecosystem docker extras fonts)
+ALL_MODULES=(base zsh tmux nvim aliases cli-tools git-ecosystem docker extras fonts)
 
 for arg in "$@"; do
   case "$arg" in
@@ -164,12 +171,14 @@ install_sh::_run_module() {
     base)           base::install ;;
     zsh)            zsh::install ;;
     tmux)           tmux::install ;;
+    nvim)           nvim::install ;;
     aliases)        aliases::install ;;
     cli-tools)      cli::install ;;
     git-ecosystem)  git_eco::install ;;
     docker)         docker::install ;;
     extras)         extras::install ;;
     fonts)          fonts::install ;;
+    zsh-terminal-app) zsh_terminal_app::install ;;
     *) echo "install: неизвестный модуль '$1', пропускаю" >&2 ;;
   esac
 }
@@ -196,6 +205,8 @@ install_sh::main() {
   # shellcheck disable=SC1091
   source "$repo_dir/modules/tmux.sh"
   # shellcheck disable=SC1091
+  source "$repo_dir/modules/nvim.sh"
+  # shellcheck disable=SC1091
   source "$repo_dir/modules/aliases.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/modules/cli-tools.sh"
@@ -207,6 +218,8 @@ install_sh::main() {
   source "$repo_dir/modules/extras.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/modules/fonts.sh"
+  # shellcheck disable=SC1091
+  source "$repo_dir/modules/zsh-terminal-app.sh"
 
   local modules
   modules="$(install_sh::_selected_modules)"

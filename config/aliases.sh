@@ -13,7 +13,21 @@ elif command -v bat >/dev/null 2>&1; then
   alias cat='bat'
 fi
 
-# cs <dir> — cd + ls одной командой. Без аргумента — в $HOME.
+# cs <dir> — cd + подробный листинг одной командой. Без аргумента — в $HOME.
 cs() {
-  cd "${1:-$HOME}" && ls
+  cd "${1:-$HOME}" && ls -l
 }
+
+# ca <dir> — cd + листинг со скрытыми файлами. Без аргумента — в $HOME.
+ca() {
+  cd "${1:-$HOME}" && ls -la
+}
+
+alias cls='clear'
+alias gs='git status'
+alias gl='git log --oneline --graph --decorate'
+
+# Python / uv helpers
+alias uvinit='uv venv && source .venv/bin/activate'
+alias uvr='uv run python'
+alias uva='uv add'
