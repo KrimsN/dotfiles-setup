@@ -1,0 +1,43 @@
+# .knrc: глобальный gitignore.
+# Устанавливается модулем modules/git-config.sh в
+# ~/.config/knrc/gitignore_global и подключается через
+# core.excludesFile — не редактировать копию на месте установки,
+# правки перезапишутся при повторном запуске установки.
+#
+# Здесь только то, что порождает конкретная машина/редактор
+# разработчика, а не проект: такие вещи не место в репозиторном
+# .gitignore, потому что они личные.
+
+# Артефакты редакторов
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+.nvim.lua
+.netrwhist
+tags
+TAGS
+
+# Артефакты ОС
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Локальные секреты и окружение
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Прочий локальный мусор
+.direnv/
+*.log

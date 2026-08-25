@@ -85,7 +85,7 @@ install_sh::_banner() {
 
 REPO_URL="${DOTFILES_REPO_URL:-https://github.com/KrimsN/krimsnrc.git}"
 DEFAULT_INSTALL_DIR="$HOME/.local/share/knrc"
-ALL_MODULES=(base zsh tmux nvim aliases cli-tools git-ecosystem docker python-tools extras fonts)
+ALL_MODULES=(base zsh tmux nvim aliases cli-tools git-ecosystem git-config docker python-tools extras fonts)
 
 for arg in "$@"; do
   case "$arg" in
@@ -234,6 +234,7 @@ install_sh::_run_module() {
     aliases)        aliases::install ;;
     cli-tools)      cli::install ;;
     git-ecosystem)  git_eco::install ;;
+    git-config)     git_config::install ;;
     docker)         docker::install ;;
     python-tools)   python_tools::install ;;
     extras)         extras::install ;;
@@ -280,6 +281,8 @@ install_sh::main() {
   source "$repo_dir/modules/cli-tools.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/modules/git-ecosystem.sh"
+  # shellcheck disable=SC1091
+  source "$repo_dir/modules/git-config.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/modules/docker.sh"
   # shellcheck disable=SC1091

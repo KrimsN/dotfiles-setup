@@ -53,6 +53,10 @@ gh (уже используется в этом репо), git-delta (см. вы
 установку)
 — lazygit исключён по решению пользователя.
 
+Настройка самого git (`~/.gitconfig`: delta как pager, core.editor,
+дефолты git, глобальный gitignore) — отдельный модуль
+modules/git-config.sh, см. [docs/modules/git-config.md](docs/modules/git-config.md).
+
 ### tmux-экосистема
 tmux, TPM, tmux-resurrect, tmux-continuum
 — tmuxinator исключён по решению пользователя.
@@ -107,8 +111,8 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
 ## Статус
 
 Проект функционально завершён: все модули из списка программ написаны
-и протестированы (11 модулей в ALL_MODULES, включая nvim и
-python-tools; плюс опциональный zsh-terminal-app вне ALL_MODULES), есть
+и протестированы (12 модулей в ALL_MODULES, включая nvim,
+python-tools и git-config; плюс опциональный zsh-terminal-app вне ALL_MODULES), есть
 единый лаунчер
 `install.sh`, работающий как через `curl | bash` на чистой машине (без
 git/curl), так и из склонированного репозитория.
@@ -128,6 +132,7 @@ git/curl), так и из склонированного репозитория.
 | `modules/aliases.sh` | [docs/modules/aliases.md](docs/modules/aliases.md) |
 | `modules/cli-tools.sh` | [docs/modules/cli-tools.md](docs/modules/cli-tools.md) |
 | `modules/git-ecosystem.sh` | [docs/modules/git-ecosystem.md](docs/modules/git-ecosystem.md) |
+| `modules/git-config.sh` | [docs/modules/git-config.md](docs/modules/git-config.md) |
 | `modules/docker.sh` | [docs/modules/docker.md](docs/modules/docker.md) |
 | `modules/python-tools.sh` | [docs/modules/python-tools.md](docs/modules/python-tools.md) |
 | `scripts/lib/epel.sh` | [docs/modules/epel.md](docs/modules/epel.md) |
