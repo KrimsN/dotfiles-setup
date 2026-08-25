@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Реестр пакетов — стратегия установки (design/pkg-metadata-json)",
+  "description": "Схема для data/packages/registry.json. Порядок установки = порядок элементов 'packages'. См. docs/design/pkg-metadata-json.md.",
+  "type": "object",
+  "required": ["packages"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string" },
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/package" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "package": {
+      "type": "object",
+      "description": "Один пакет из реестра. Технические детали методов (repo, regex, имя в apt/dnf/yum...) не здесь — они в data/packages/methods/<type>.json, ключ — это же 'name'.",
+      "required": ["name", "source_url", "methods"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Каноническое имя пакета (не обязательно совпадает с именем в конкретном пакетном менеджере, см. methods/pkg.json — например 'fd' vs системное 'fd-find')."
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Последний fallback: если ни один метод не сработал, диспетчер показывает эту ссылку вместо тихого отказа (не автоматическая сборка из исходников — см. docs/design/pkg-metadata-json.md)."
+        },
+        "methods": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/method" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "method": {
+      "type": "object",
+      "required": ["type", "priority", "comment"],
+      "properties": {
+        "type": {
+          "enum": ["pkg", "github", "pip", "curl-sh", "custom"],
+          "description": "pkg/github/pip/curl-sh — технические детали в methods/<type>.json (ключ = имя пакета). custom — детали (handler) прямо здесь, техфайла нет."
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1 — предпочтительный метод. Не переиспользовать порядок массива вместо этого поля — см. design-документ, зачем оставлено явным."
+        },
+        "comment": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Обоснование выбора на русском — текст предназначен в т.ч. для будущего интерфейса выбора источника."
+        },
+        "prereq": {
+          "type": "string",
+          "description": "Имя bash-функции — системная предпосылка ПЕРЕД этим методом (например epel::ensure). Не путать с 'requires'."
+        },
+        "requires": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Имена других пакетов из ЭТОГО ЖЕ реестра, которые должны быть установлены раньше (например ruff:custom требует uv). Не путать с 'prereq'."
+        },
+        "handler": {
+          "type": "string",
+          "description": "Только для type=custom: имя уже существующей bash-функции, которую нужно вызвать целиком (не только предусловие, как prereq)."
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "custom" } }, "required": ["type"] },
+          "then": { "required": ["handler"] }
+        }
+      ]
+    }
+  }
+}

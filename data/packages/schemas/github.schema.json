@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Метод 'github' — установка с GitHub Releases",
+  "description": "Схема для data/packages/methods/github.json. Ключ верхнего уровня (кроме $comment) — имя пакета из registry.json. Ровно одно из asset_regex/asset_by_arch обязательно (см. oneOf).",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string" }
+  },
+  "additionalProperties": {
+    "type": "object",
+    "required": ["repo", "inner_path_glob", "target_name"],
+    "properties": {
+      "repo": {
+        "type": "string",
+        "pattern": "^[^/]+/[^/]+$",
+        "description": "owner/repo на GitHub."
+      },
+      "asset_regex": {
+        "type": "string",
+        "description": "Regex имени ассета с плейсхолдерами {arch_rust}/{arch_go}, подставляемыми перед матчингом (см. github_release::arch_rust/arch_go). Использовать, когда имя архитектуры в ассете следует одному из этих двух соглашений."
+      },
+      "asset_by_arch": {
+        "type": "object",
+        "required": ["x86_64", "aarch64"],
+        "properties": {
+          "x86_64": { "type": "string" },
+          "aarch64": { "type": "string" }
+        },
+        "additionalProperties": false,
+        "description": "Прямое соответствие uname -m -> regex, без плейсхолдеров. Использовать, когда именование архитектуры в ассете не следует {arch_rust}/{arch_go} (пример: fastfetch — 'aarch64', delta — musl только для x86_64, gnu для aarch64)."
+      },
+      "inner_path_glob": {
+        "type": "string",
+        "description": "Путь к бинарнику внутри архива для `find -path \"*<glob>\"`. Начинать с '/', иначе может совпасть по подстроке с другим файлом в архиве (реальный баг: zoxide совпадал с completions/_zoxide)."
+      },
+      "target_name": { "type": "string", "description": "Имя, под которым бинарник кладётся в /usr/local/bin." },
+      "$note": { "type": "string", "description": "Пояснение по правкам/находкам ревью — не используется дispatcher-ом, только для читателя." }
+    },
+    "oneOf": [
+      { "required": ["asset_regex"] },
+      { "required": ["asset_by_arch"] }
+    ],
+    "additionalProperties": false
+  }
+}

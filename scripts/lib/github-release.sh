@@ -47,6 +47,11 @@ github_release::install() {
     return 0
   fi
 
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы $target_name из $repo в /usr/local/bin/$target_name"
+    return 0
+  fi
+
   local url
   url="$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" \
     | grep -oE '"browser_download_url":[[:space:]]*"[^"]+"' \

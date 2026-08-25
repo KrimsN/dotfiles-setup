@@ -72,6 +72,10 @@ os::detect() {
 }
 
 os::pkg_update() {
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] обновил бы индекс пакетов ($PKG_MANAGER)"
+    return 0
+  fi
   case "$PKG_MANAGER" in
     apt) sudo apt-get update -y ;;
     dnf) sudo dnf makecache -y ;;
@@ -87,6 +91,10 @@ os::pkg_install() {
   if [ "$#" -eq 0 ]; then
     log::err "os::pkg_install: не переданы пакеты"
     return 1
+  fi
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы пакеты ($PKG_MANAGER): $*"
+    return 0
   fi
   case "$PKG_MANAGER" in
     apt) sudo apt-get install -y "$@" ;;
@@ -112,6 +120,10 @@ os::pkg_try_install() {
   if [ "$#" -ne 1 ]; then
     log::err "os::pkg_try_install: ожидается ровно один пакет"
     return 1
+  fi
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы пакет ($PKG_MANAGER): $1"
+    return 0
   fi
   case "$PKG_MANAGER" in
     apt) sudo apt-get install -y "$1" ;;

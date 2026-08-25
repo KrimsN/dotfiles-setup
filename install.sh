@@ -10,11 +10,18 @@
 # Опции (см. CLAUDE.md "Механизм конфигурации"):
 #   --yes / NONINTERACTIVE=1   — не задавать вопросов, дефолты везде
 #                                 безопасные (см. отдельные модули)
+#   --dry-run / DRY_RUN=1       — ничего не менять на диске/в системе,
+#                                 только показать, что было бы сделано
+#                                 (пакеты, rc-блоки, бинарники с GitHub
+#                                 Releases — см. DRY_RUN в scripts/lib/*)
 #   DOTFILES_MODULES="base zsh" — установить только перечисленные
 #                                 модули без интерактивного меню
 #   DOTFILES_DIR=/path          — куда клонировать репозиторий при
 #                                 запуске через curl | bash
 #                                 (по умолчанию ~/.local/share/knrc)
+#
+# Каждый прогон дописывает одну строку в ~/.knrc.log (время, режим,
+# список модулей, дистрибутив, результат) — см. install_sh::_write_log.
 #
 # Модуль zsh-terminal-app НЕ входит в ALL_MODULES и не предлагается ни
 # в общей установке, ни в интерактивном меню — запускается только
@@ -85,13 +92,36 @@ install_sh::_banner() {
 
 REPO_URL="${DOTFILES_REPO_URL:-https://github.com/KrimsN/krimsnrc.git}"
 DEFAULT_INSTALL_DIR="$HOME/.local/share/knrc"
-ALL_MODULES=(base zsh tmux nvim aliases cli-tools git-ecosystem git-config docker python-tools extras fonts)
+ALL_MODULES=(base zsh tmux nvim aliases cli-tools git-ecosystem git-config ssh-config docker python-tools extras fonts)
 
 for arg in "$@"; do
   case "$arg" in
     --yes) export NONINTERACTIVE=1 ;;
+    --dry-run) export DRY_RUN=1 ;;
   esac
 done
+
+RUN_LOG_FILE="$HOME/.knrc.log"
+
+# Пишет одну строку в ~/.knrc.log с результатом прогона. Вызывается из
+# EXIT-трапа (см. install_sh::main), поэтому должна быть защищена от
+# ненайденных переменных (`set -u`) — трап может сработать до того, как
+# os::detect/модули отработали (например при ошибке бутстрапа git/curl).
+# Ошибка самой записи в лог (например HOME на read-only ФС) не должна
+# ронять уже завершившийся скрипт — отсюда `|| true`.
+install_sh::_write_log() {
+  local code=$? mode="install" status="ok"
+  [ "${DRY_RUN:-0}" = "1" ] && mode="dry-run"
+  [ "$code" -ne 0 ] && status="fail(exit=$code)"
+  {
+    printf '%s mode=%s status=%s distro=%s modules="%s"\n' \
+      "$(date +%Y-%m-%dT%H:%M:%S%z)" \
+      "$mode" \
+      "$status" \
+      "${OS_ID:-?}${OS_VERSION_ID:+/$OS_VERSION_ID}" \
+      "${DOTFILES_SELECTED_MODULES:-}"
+  } >> "$RUN_LOG_FILE" 2>/dev/null || true
+}
 
 # При `curl | bash` у скрипта нет собственного пути на диске (stdin) —
 # в этом случае репозиторий нужно клонировать, а для этого нужны git и
@@ -202,8 +232,8 @@ install_sh::_selected_modules() {
   echo "" >&2
   log::prompt "Что установить?" >&2
   echo "" >&2
-  echo "  1) Всё (рекомендуется)" >&2
-  echo "  2) Выбрать вручную" >&2
+  log::prompt "  1) Всё (рекомендуется)" >&2
+  log::prompt "  2) Выбрать вручную" >&2
   local choice
   read -r -p "$(log::prompt 'Выбор [1]: ')" choice < /dev/tty || choice=""
   choice="${choice:-1}"
@@ -235,6 +265,7 @@ install_sh::_run_module() {
     cli-tools)      cli::install ;;
     git-ecosystem)  git_eco::install ;;
     git-config)     git_config::install ;;
+    ssh-config)     ssh_config::install ;;
     docker)         docker::install ;;
     python-tools)   python_tools::install ;;
     extras)         extras::install ;;
@@ -246,6 +277,7 @@ install_sh::_run_module() {
 
 install_sh::main() {
   install_sh::_banner
+  trap install_sh::_write_log EXIT
 
   local repo_dir
   repo_dir="$(install_sh::_ensure_repo)"
@@ -266,6 +298,8 @@ install_sh::main() {
   source "$repo_dir/scripts/lib/github-release.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/scripts/lib/rcfile.sh"
+  # shellcheck disable=SC1091
+  source "$repo_dir/scripts/lib/pkg-registry.sh"
 
   # shellcheck disable=SC1091
   source "$repo_dir/modules/base.sh"
@@ -284,6 +318,8 @@ install_sh::main() {
   # shellcheck disable=SC1091
   source "$repo_dir/modules/git-config.sh"
   # shellcheck disable=SC1091
+  source "$repo_dir/modules/ssh-config.sh"
+  # shellcheck disable=SC1091
   source "$repo_dir/modules/docker.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/modules/python-tools.sh"
@@ -296,7 +332,11 @@ install_sh::main() {
 
   local modules
   modules="$(install_sh::_selected_modules)"
+  export DOTFILES_SELECTED_MODULES="$modules"
   echo ""
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::warn "install: РЕЖИМ DRY-RUN — изменений на диске/в системе не будет"
+  fi
   log::info "install: устанавливаю: $modules"
 
   local m
@@ -307,6 +347,11 @@ install_sh::main() {
   done
 
   echo ""
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "Dry-run завершён, изменений не было. Для реальной установки запусти без --dry-run."
+    return 0
+  fi
+
   log::info "Готово! Перелогинься (или открой новый терминал), чтобы изменения shell/группы docker применились."
   echo ""
   log::info "Настройка темы Powerlevel10k запустится автоматически при первом"

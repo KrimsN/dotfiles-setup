@@ -1,0 +1,114 @@
+{
+  "$schema": "./schemas/registry.schema.json",
+  "$comment": "Прототип реестра пакетов (design/pkg-metadata-json). Порядок установки = порядок элементов массива 'packages'. У каждого пакета — упорядоченный список методов, первый по 'priority' считается предпочтительным; 'comment' объясняет выбор и предназначен в т.ч. для будущего интерфейса выбора источника (install.sh --package=NAME[:SOURCE]). Технические детали метода (имя пакета в конкретном менеджере, репозиторий на GitHub и т.п.) не хранятся здесь, а лежат в data/packages/methods/<type>.json — см. docs/design/pkg-metadata-json.md. 'prereq' и 'requires' — поля МЕТОДА (не пакета): 'prereq' — системная предпосылка, вызов bash-функции (epel::ensure); 'requires' — другой пакет из ЭТОГО ЖЕ реестра должен быть установлен раньше (custom-метод ruff требует uv, но альтернативный github-метод ruff — нет, поэтому requires привязан к конкретному методу, а не ко всему пакету). 'source_url' — поле ПАКЕТА, последний fallback: если ни один метод не сработал, диспетчер не должен просто падать — он должен показать ссылку на исходники/апстрим-проект, где пользователь может разобраться сам (в т.ч. собрать вручную из исходников). Это НЕ метод установки 'source' (собирать из исходников автоматически мы сознательно не стали — см. обсуждение в design-документе), а просто человекочитаемая подсказка на крайний случай.",
+
+  "packages": [
+    {
+      "name": "tldr",
+      "source_url": "https://github.com/tldr-pages/tldr",
+      "methods": [
+        { "type": "pkg", "priority": 1, "prereq": "epel::ensure", "comment": "есть в базовых репах везде, на CentOS/RHEL — через EPEL. ВНИМАНИЕ (проверено агентом): пакет 'tldr' — РАЗНЫЕ клиенты в разных дистрибутивах: Haskell (tldr-hs) на Debian/Ubuntu, Python на Fedora/EPEL — разное поведение (скорость, формат кэша) под одним именем. Рассмотреть замену на tealdeer (единообразный статический Rust-бинарник, pkg+github) — решение за пользователем, не применено автоматически, см. docs/design/pkg-metadata-json.md" }
+      ]
+    },
+    {
+      "name": "ripgrep",
+      "source_url": "https://github.com/BurntSushi/ripgrep",
+      "methods": [
+        { "type": "pkg", "priority": 1, "prereq": "epel::ensure", "comment": "нет конфликтов имени пакета/бинарника ни в одном дистрибутиве; отставание от апстрима на 1-2 минорные версии некритично для grep-инструмента; на CentOS/RHEL живёт в EPEL" },
+        { "type": "github", "priority": 2, "comment": "fallback — для CentOS Stream 9 без EPEL или когда нужна версия свежее репозиторной (apt-версия Debian заметно отстаёт: 13.0 vs актуальных 15.x)" }
+      ]
+    },
+    {
+      "name": "fd",
+      "source_url": "https://github.com/sharkdp/fd",
+      "methods": [
+        { "type": "pkg", "priority": 1, "prereq": "epel::ensure", "comment": "пакет везде называется fd-find (конфликт имени с другим пакетом 'fd'). На apt (Ubuntu/Debian) бинарник внутри пакета — fdfind, нужен symlink на fd (делает cli::ensure_symlinks). На dnf/yum (Fedora/EPEL9) бинарник уже называется fd — переименования нет, симлинк не нужен; на CentOS/RHEL живёт в EPEL" },
+        { "type": "github", "priority": 2, "comment": "fallback для дистрибутивов без пакета или когда нужна версия свежее репозиторной" }
+      ]
+    },
+    {
+      "name": "fzf",
+      "source_url": "https://github.com/junegunn/fzf",
+      "methods": [
+        { "type": "github", "priority": 1, "comment": "apt-версия в Ubuntu/Debian заметно отстаёт от апстрима (0.44 vs актуальных 0.7x) — новые версии дают заметные улучшения shell-интеграции" },
+        { "type": "pkg", "priority": 2, "prereq": "epel::ensure", "comment": "fallback; живёт в EPEL9, доступен только с конца 2023 — на старых снапшотах CentOS может отсутствовать" }
+      ]
+    },
+    {
+      "name": "bat",
+      "source_url": "https://github.com/sharkdp/bat",
+      "methods": [
+        { "type": "pkg", "priority": 1, "prereq": "epel::ensure", "comment": "на apt (Ubuntu/Debian) бинарник называется batcat (конфликт имени, нужен symlink на bat через cli::ensure_symlinks), на dnf/yum — bat без переименования. На CentOS/RHEL живёт в EPEL9, неожиданно синхронизирован с последним апстрим-релизом" },
+        { "type": "github", "priority": 2, "comment": "fallback, в первую очередь актуален для Ubuntu/Debian, где версия в репозиториях заметно отстаёт от апстрима" }
+      ]
+    },
+    {
+      "name": "jq",
+      "source_url": "https://github.com/jqlang/jq",
+      "methods": [
+        { "type": "pkg", "priority": 1, "comment": "стандартный путь, версия достаточно свежая во всех целевых дистрибутивах, EPEL не требуется. Также рантайм-зависимость для чтения самого этого реестра — по прототипу ставится в base, не в cli-tools, см. design-документ" },
+        { "type": "github", "priority": 2, "comment": "fallback — единственный пакет с голым бинарником (не .tar.gz), репозиторий jqlang/jq — официальный преемник stedolan/jq после передачи организации" }
+      ]
+    },
+    {
+      "name": "httpie",
+      "source_url": "https://github.com/httpie/cli",
+      "methods": [
+        { "type": "pkg", "priority": 1, "prereq": "epel::ensure", "comment": "современная версия (3.2.x) во всех целевых дистрибутивах; на CentOS/RHEL требует EPEL (аналогично tldr)" },
+        { "type": "pip", "priority": 2, "comment": "fallback — у httpie нет статических бинарников на GitHub Releases (пустой список ассетов), это python-пакет; есть также отдельный бинарник на packages.httpie.io, но это не GitHub Releases и не рассматривался как MVP-вариант" }
+      ]
+    },
+    {
+      "name": "eza",
+      "source_url": "https://github.com/eza-community/eza",
+      "methods": [
+        { "type": "github", "priority": 1, "comment": "надёжного пакета нет: в Ubuntu universe сильно устаревшая версия (0.18 vs актуальных 0.23+), пакет во Fedora периодически осиротевает (был исключён из Fedora 42, позже подхвачен другим мейнтейнером), в EPEL нет вообще. ВНИМАНИЕ: с релиза ~v0.23 проект перестал публиковать musl-сборки — используется gnu-таргет, не musl (проверено агентом: старый musl-regex не матчился бы ни с одним ассетом)" }
+      ]
+    },
+    {
+      "name": "delta",
+      "source_url": "https://github.com/dandavison/delta",
+      "methods": [
+        { "type": "pkg", "priority": 1, "comment": "пакет git-delta есть в Fedora и в EPEL9 (актуальная версия) — на dnf/yum это основной способ" },
+        { "type": "github", "priority": 2, "comment": "приоритетнее на Debian/Ubuntu, где apt-версия git-delta заметно старее апстрима. ВНИМАНИЕ: для aarch64 нет musl-сборки, только gnu (x86_64 — musl) — см. asset_by_arch в methods/github.json" }
+      ]
+    },
+    {
+      "name": "curlie",
+      "source_url": "https://github.com/rs/curlie",
+      "methods": [
+        { "type": "github", "priority": 1, "comment": "не публикуется ни в одном стандартном репозитории целевых дистрибутивов (ни apt, ни dnf/EPEL, только неофициальные COPR) — единственный из группы eza/delta/curlie/zoxide, где это подтверждено без оговорок" }
+      ]
+    },
+    {
+      "name": "zoxide",
+      "source_url": "https://github.com/ajeetdsouza/zoxide",
+      "methods": [
+        { "type": "pkg", "priority": 1, "comment": "в Ubuntu 24.04 и Fedora есть штатно; в стабильном Debian (bookworm) пакета нет — появился только в sid/trixie (см. ajeetdsouza/zoxide#1008)" },
+        { "type": "github", "priority": 2, "comment": "fallback для Debian stable и когда нужна версия свежее репозиторной (в EPEL9 пакет rust-zoxide заметно отстаёт: ~0.9.8 против актуальных 0.10.x). Ведущий '/' перед именем бинарника в glob обязателен — иначе совпадает по подстроке с completions/_zoxide внутри архива (реальный баг, воспроизводим до сих пор)" }
+      ]
+    },
+    {
+      "name": "fastfetch",
+      "source_url": "https://github.com/fastfetch-cli/fastfetch",
+      "methods": [
+        { "type": "github", "priority": 1, "comment": "нет в репах Debian/Ubuntu, только Fedora/EPEL; ставим единообразно бинарником, чтобы не ветвить по OS_FAMILY. Ассет с суффиксом 'musl' в имени вопреки ожиданию НЕ статический (динамически слинкован с musl libc) — на glibc-дистрибутивах не запускается, нужна именно glibc-сборка 'linux-<arch>'" }
+      ]
+    },
+    {
+      "name": "uv",
+      "source_url": "https://github.com/astral-sh/uv",
+      "methods": [
+        { "type": "curl-sh", "priority": 1, "comment": "официальный установщик astral.sh — решение пользователя. Подтверждено: 'uv self update' работает ТОЛЬКО при установке этим способом (через pip/pipx/brew — самообновление принудительно отключено), это и есть причина не использовать github-release-паттерн, как для остальных Rust-бинарников" }
+      ]
+    },
+    {
+      "name": "ruff",
+      "source_url": "https://github.com/astral-sh/ruff",
+      "methods": [
+        { "type": "custom", "priority": 1, "requires": ["uv"], "comment": "ставится через `uv tool install ruff` — изолированное окружение и единообразное обновление (`uv tool upgrade ruff`) без отдельной логики распаковки бинарника", "handler": "python_tools::install_ruff" },
+        { "type": "github", "priority": 2, "comment": "резервный метод на случай недоступности/поломки uv-тулчейна — ruff публикует собственные статические бинарники независимо от uv. НЕ проверено вживую (tar tzf): внутренняя структура архива предполагается по аналогии с остальными cargo-dist пакетами, требует проверки перед реализацией диспетчера" }
+      ]
+    }
+  ]
+}

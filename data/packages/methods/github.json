@@ -1,0 +1,80 @@
+{
+  "$schema": "../schemas/github.schema.json",
+  "$comment": "Метод 'github': источник — GitHub Releases (см. scripts/lib/github-release.sh:github_release::install). asset_regex поддерживает плейсхолдеры {arch_rust}/{arch_go}, подставляемые из github_release::arch_rust/arch_go перед сборкой regex. Не все проекты на GitHub называют архитектуру одинаково (см. fastfetch: 'aarch64' в имени ассета, а не 'arm64', который вернул бы arch_go) — для таких пакетов вместо asset_regex используется asset_by_arch (точное соответствие uname -m -> regex), без плейсхолдеров.",
+
+  "ripgrep": {
+    "repo": "BurntSushi/ripgrep",
+    "asset_regex": "ripgrep-.*-{arch_rust}-unknown-linux-musl\\.tar\\.gz$",
+    "inner_path_glob": "/rg",
+    "target_name": "rg"
+  },
+  "fd": {
+    "repo": "sharkdp/fd",
+    "asset_regex": "fd-v.*-{arch_rust}-unknown-linux-musl\\.tar\\.gz$",
+    "inner_path_glob": "/fd",
+    "target_name": "fd"
+  },
+  "fzf": {
+    "repo": "junegunn/fzf",
+    "asset_regex": "fzf-.*-linux_{arch_go}\\.tar\\.gz$",
+    "inner_path_glob": "/fzf",
+    "target_name": "fzf"
+  },
+  "bat": {
+    "repo": "sharkdp/bat",
+    "asset_regex": "bat-v.*-{arch_rust}-unknown-linux-musl\\.tar\\.gz$",
+    "inner_path_glob": "/bat",
+    "target_name": "bat"
+  },
+  "jq": {
+    "repo": "jqlang/jq",
+    "asset_regex": "jq-linux-{arch_go}$",
+    "inner_path_glob": "",
+    "target_name": "jq"
+  },
+  "eza": {
+    "repo": "eza-community/eza",
+    "asset_regex": "eza_{arch_rust}-unknown-linux-gnu\\.tar\\.gz$",
+    "inner_path_glob": "/eza",
+    "target_name": "eza",
+    "$note": "ИСПРАВЛЕНО после проверки агентом: проект перестал публиковать musl-сборки где-то между v0.22.0 и v0.23.5 (проверено на текущем latest v0.23.5), старый regex на -musl.tar.gz$ не матчился бы ни с одним ассетом. Также НЕ использовать вариант с суффиксом _no_libgit (сборка без поддержки git-статуса — теряет часть смысла инструмента). $ в конце regex защищает от случайного совпадения с *_no_libgit.tar.gz."
+  },
+  "delta": {
+    "repo": "dandavison/delta",
+    "asset_by_arch": {
+      "x86_64": "delta-.*-x86_64-unknown-linux-musl\\.tar\\.gz$",
+      "aarch64": "delta-.*-aarch64-unknown-linux-gnu\\.tar\\.gz$"
+    },
+    "inner_path_glob": "/delta",
+    "target_name": "delta",
+    "$note": "ИСПРАВЛЕНО после проверки агентом: у delta есть musl-сборка для x86_64, но НЕТ musl для aarch64 (только gnu) — единый asset_regex с плейсхолдером {arch_rust} для aarch64 не находил бы ассет. Взят asset_by_arch по аналогии с fastfetch, а не единый regex."
+  },
+  "curlie": {
+    "repo": "rs/curlie",
+    "asset_regex": "curlie_.*_linux_{arch_go}\\.tar\\.gz$",
+    "inner_path_glob": "/curlie",
+    "target_name": "curlie"
+  },
+  "zoxide": {
+    "repo": "ajeetdsouza/zoxide",
+    "asset_regex": "zoxide-.*-{arch_rust}-unknown-linux-musl\\.tar\\.gz$",
+    "inner_path_glob": "/zoxide",
+    "target_name": "zoxide"
+  },
+  "fastfetch": {
+    "repo": "fastfetch-cli/fastfetch",
+    "asset_by_arch": {
+      "x86_64": "fastfetch-linux-amd64\\.tar\\.gz$",
+      "aarch64": "fastfetch-linux-aarch64\\.tar\\.gz$"
+    },
+    "inner_path_glob": "usr/bin/fastfetch",
+    "target_name": "fastfetch"
+  },
+  "ruff": {
+    "repo": "astral-sh/ruff",
+    "asset_regex": "ruff-{arch_rust}-unknown-linux-gnu\\.tar\\.gz$",
+    "inner_path_glob": "/ruff",
+    "target_name": "ruff",
+    "$note": "НЕ проверено вживую (tar tzf) — предполагается по аналогии с остальными cargo-dist-архивами (ripgrep/bat/delta), проверить структуру архива перед реализацией диспетчера. gnu-таргет, не musl — агент подтвердил только gnu- и darwin-ассеты для linux x86_64/aarch64, musl-варианта в релизе нет."
+  }
+}

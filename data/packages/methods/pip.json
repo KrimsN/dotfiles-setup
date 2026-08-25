@@ -1,0 +1,6 @@
+{
+  "$schema": "../schemas/pip.schema.json",
+  "$comment": "Метод 'pip': requires_pkg — системный пакет, который нужно поставить (через os::pkg_install), если pip3 ещё не в PATH, перед 'pip3 install --user <pip_name>'.",
+
+  "httpie": { "pip_name": "httpie", "requires_pkg": "python3-pip" }
+}
