@@ -15,5 +15,6 @@
   "dig":     { "apt": "dnsutils", "dnf": "bind-utils", "yum": "bind-utils" },
   "lsof":    { "apt": "lsof",    "dnf": "lsof",    "yum": "lsof" },
   "mtr":     { "apt": "mtr-tiny", "dnf": "mtr",    "yum": "mtr" },
-  "ncdu":    { "apt": "ncdu",    "dnf": "ncdu",    "yum": "ncdu" }
+  "ncdu":    { "apt": "ncdu",    "dnf": "ncdu",    "yum": "ncdu" },
+  "direnv":  { "apt": "direnv",  "dnf": "direnv",  "yum": "" }
 }

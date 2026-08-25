@@ -1,7 +1,43 @@
 # modules/cli-tools.sh
 
-Ставит все 10 CLI-инструментов нового поколения (ripgrep, fd, fzf, bat,
-jq, httpie, eza, delta, curlie, zoxide).
+Ставит все 11 CLI-инструментов нового поколения (ripgrep, fd, fzf, bat,
+jq, httpie, eza, delta, curlie, zoxide, direnv).
+
+## direnv (2026-08-25)
+
+Автоактивация `.venv` (создаётся через уже установленный `uv`) и прочих
+project-scoped переменных окружения при `cd` в каталог с `.envrc` —
+согласовано пользователем, добавлено к остальным CLI-инструментам, не в
+`python-tools.sh`: сама установка direnv не специфична для Python
+(`data/packages/registry.json` трактует его как обычный CLI-инструмент
+через `pkg::install`), только сценарий использования завязан на uv.
+
+Метод `pkg`: есть штатно в apt (Debian/Ubuntu) и dnf (Fedora). На
+yum-семействе (CentOS/RHEL) пакета нет ни в базовых репах, ни в EPEL —
+проверено: `src.fedoraproject.org/rpms/direnv` не собирает
+epel8/epel9-таргеты, только текущие релизы Fedora. `methods/pkg.json`
+оставляет `"yum": ""` — диспетчер видит пустое имя пакета, метод `pkg`
+проваливается для `yum`, и `pkg::install` уходит на `github`-метод
+(приоритет 2), как для CentOS/RHEL в целом.
+
+Метод `github`: проект публикует голые бинарники
+`direnv.linux-amd64`/`direnv.linux-arm64` (не `.tar.gz`) — как `jq`,
+`inner_path_glob` не используется. `{arch_go}` совпадает с именованием
+архитектуры в ассетах напрямую, `asset_by_arch` не понадобился.
+
+Хук шелла — `eval "$(direnv hook zsh)"` в `config/zshrc`, под guard
+`command -v direnv`, сразу после хука zoxide (тот же паттерн: fzf/zoxide/
+direnv все находятся ПОСЛЕ `source "$ZSH/oh-my-zsh.sh"`, т.к. это
+требование самого direnv — хук должен переопределять `cd`/`chpwd` после
+того, как всё остальное шелл-окружение уже settled).
+
+Проверено через `.claude/skills/test-module/` (`base,cli-tools`, два
+прогона на идемпотентность в одном контейнере): Ubuntu 24.04 —
+`direnv` ставится через apt (`pkg`-метод), CentOS Stream 9 — apt-пакета
+нет («No match for argument: direnv»), диспетчер уходит на `github`
+(`direnv.linux-amd64` с GitHub Releases). На обоих дистрибутивах второй
+прогон распознаёт уже установленный `direnv` и не переустанавливает
+его.
 
 ## Миграция на диспетчер (2026-08-25)
 

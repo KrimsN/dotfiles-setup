@@ -133,6 +133,11 @@ fi
 
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 
+# direnv: автоактивация .venv (через uv) и прочих project-scoped
+# переменных при cd в каталог с .envrc. Guard на command -v, чтобы
+# zsh.sh не зависел от порядка установки модулей (ставится cli-tools.sh).
+command -v direnv >/dev/null 2>&1 && eval "$(direnv hook zsh)"
+
 # Локальные правки пользователя: этот файл перезаписывается install.sh при
 # каждом запуске, поэтому здесь нет места для собственных настроек — они
 # подключаются отдельным файлом, который install.sh не трогает.

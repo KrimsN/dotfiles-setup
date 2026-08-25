@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Установка CLI-инструментов нового поколения:
-# ripgrep, fd, fzf, bat, eza, zoxide, delta, jq, httpie, curlie.
+# ripgrep, fd, fzf, bat, eza, zoxide, delta, jq, httpie, curlie, direnv.
 # Не запускать напрямую — подключать через `source` после
 # scripts/lib/os-detect.sh и scripts/lib/pkg-registry.sh (нужны
 # PKG_MANAGER и pkg::install).
@@ -21,7 +21,7 @@
 
 set -euo pipefail
 
-CLI_PACKAGES=(ripgrep fd fzf bat jq httpie eza delta curlie zoxide)
+CLI_PACKAGES=(ripgrep fd fzf bat jq httpie eza delta curlie zoxide direnv)
 
 cli::_dotfiles_dir() {
   echo "${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"

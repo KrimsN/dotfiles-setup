@@ -53,7 +53,12 @@ git, curl, wget, vim, neovim, htop, btop, tree, unzip, zip, diffutils
 конфиг + lazy.nvim, см. modules/nvim.sh и [docs/modules/nvim.md](docs/modules/nvim.md).
 
 ### CLI-инструменты нового поколения
-ripgrep (rg), fd, fzf, bat, eza, zoxide, delta, jq, httpie, curlie
+ripgrep (rg), fd, fzf, bat, eza, zoxide, delta, jq, httpie, curlie,
+direnv — автоактивация `.venv` (через уже установленный uv) и прочих
+project-scoped переменных при `cd` в каталог с `.envrc`; хук
+`eval "$(direnv hook zsh)"` в `config/zshrc` подключается после
+инициализации oh-my-zsh, по образцу fzf/zoxide, см.
+[docs/modules/cli-tools.md](docs/modules/cli-tools.md).
 
 ### Git-экосистема
 gh (уже используется в этом репо), git-delta (см. выше, не дублировать

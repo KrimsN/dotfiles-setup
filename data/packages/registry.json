@@ -144,6 +144,14 @@
       "methods": [
         { "type": "pkg", "priority": 1, "prereq": "epel::ensure", "comment": "в базовых репах apt/dnf (Debian/Ubuntu/Fedora); на CentOS Stream 9 живёт в EPEL (проверено в контейнере: ncdu 1.22 доступен как epel-пакет) — аналогично btop в modules/base.sh" }
       ]
+    },
+    {
+      "name": "direnv",
+      "source_url": "https://github.com/direnv/direnv",
+      "methods": [
+        { "type": "pkg", "priority": 1, "comment": "есть штатно в apt (Debian/Ubuntu) и dnf (Fedora). На yum-семействе (CentOS/RHEL) пакета нет ни в базовых репах, ни в EPEL (проверено: src.fedoraproject.org/rpms/direnv не собирает epel8/epel9-таргеты, только текущие Fedora-релизы) — methods/pkg.json оставляет 'yum' пустым, диспетчер уходит на github-метод" },
+        { "type": "github", "priority": 2, "comment": "fallback для CentOS/RHEL (нет пакета вообще) и когда нужна версия свежее репозиторной. Проект публикует голые бинарники direnv.linux-amd64/arm64 (не .tar.gz), как jq — inner_path_glob не используется" }
+      ]
     }
   ]
 }

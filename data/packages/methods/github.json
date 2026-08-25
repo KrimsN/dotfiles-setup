@@ -76,5 +76,12 @@
     "inner_path_glob": "/ruff",
     "target_name": "ruff",
     "$note": "НЕ проверено вживую (tar tzf) — предполагается по аналогии с остальными cargo-dist-архивами (ripgrep/bat/delta), проверить структуру архива перед реализацией диспетчера. gnu-таргет, не musl — агент подтвердил только gnu- и darwin-ассеты для linux x86_64/aarch64, musl-варианта в релизе нет."
+  },
+  "direnv": {
+    "repo": "direnv/direnv",
+    "asset_regex": "direnv\\.linux-{arch_go}$",
+    "inner_path_glob": "",
+    "target_name": "direnv",
+    "$note": "голый бинарник (direnv.linux-amd64 / direnv.linux-arm64), не .tar.gz — как jq; {arch_go} совпадает с именованием архитектуры в ассетах без нужды в asset_by_arch"
   }
 }
