@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Установка и настройка tmux + TPM + tmux-resurrect + tmux-continuum.
+# Установка и настройка tmux + TPM + tmux-resurrect + tmux-continuum +
+# tmux-yank.
 # Не запускать напрямую — подключать через `source` после
-# scripts/lib/os-detect.sh и scripts/lib/rcfile.sh.
+# scripts/lib/os-detect.sh, scripts/lib/epel.sh (нужны OS_FAMILY,
+# os::pkg_install, os::pkg_try_install, epel::ensure — для установки
+# xclip/wl-clipboard, нужных tmux-yank) и scripts/lib/rcfile.sh.
 #
 # Публичная точка входа: tmux::install
 #
@@ -25,6 +28,26 @@ tmux::_dotfiles_dir() {
 tmux::install_package() {
   log::info "tmux: устанавливаю пакет tmux"
   os::pkg_install tmux
+}
+
+# tmux-yank копирует выделение из copy-mode в системный буфер обмена, но
+# сам этого не умеет — на Linux ему нужен внешний CLI-инструмент (xclip/
+# xsel для X11, wl-copy из wl-clipboard для Wayland). Ставим оба набора
+# через os::pkg_try_install (не os::pkg_install), т.к. на части
+# rhel-семейства (например старый CentOS без нужного EPEL-пакета)
+# wl-clipboard может отсутствовать — тогда просто предупреждаем и
+# продолжаем с тем, что установилось.
+tmux::install_clipboard_deps() {
+  log::info "tmux: устанавливаю зависимости для tmux-yank (буфер обмена)"
+  epel::ensure
+  local pkg
+  for pkg in xclip wl-clipboard; do
+    if os::pkg_try_install "$pkg"; then
+      log::info "tmux: $pkg установлен"
+    else
+      log::warn "tmux: $pkg недоступен через $PKG_MANAGER — пропускаю"
+    fi
+  done
 }
 
 tmux::install_tpm() {
@@ -53,6 +76,26 @@ tmux::write_config() {
 
   cp "$src" "$dest"
   log::info "tmux: ~/.tmux.conf обновлён"
+}
+
+# ~/.tmux.conf.local — точка расширения для собственных настроек
+# пользователя (см. подключение в config/tmux.conf). install.sh его не
+# трогает при повторных запусках, поэтому создаём только если файла ещё
+# нет.
+tmux::create_local_file() {
+  local dest="$HOME/.tmux.conf.local"
+
+  if [ -f "$dest" ]; then
+    log::info "tmux: ~/.tmux.conf.local уже существует, не трогаю"
+    return 0
+  fi
+
+  cat > "$dest" <<'EOF'
+# ~/.tmux.conf.local — сюда пишите всё, что хотите сохранить между
+# запусками install.sh. Этот файл он не создаёт заново и не
+# перезаписывает, в отличие от ~/.tmux.conf.
+EOF
+  log::info "tmux: создан ~/.tmux.conf.local"
 }
 
 tmux::install_plugins() {
@@ -88,8 +131,10 @@ tmux::install_autoattach_hook() {
 
 tmux::install() {
   tmux::install_package
+  tmux::install_clipboard_deps
   tmux::install_tpm
   tmux::write_config
+  tmux::create_local_file
   tmux::install_plugins
   tmux::install_autoattach_hook
   log::info "tmux: готово. Голый 'tmux' будет подключаться к существующей сессии, если она есть."
