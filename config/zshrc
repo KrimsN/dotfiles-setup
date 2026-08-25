@@ -44,10 +44,61 @@ setopt HIST_IGNORE_DUPS         # не писать повторы подряд
 setopt HIST_IGNORE_ALL_DUPS     # убирать старые дубли при повторе
 setopt HIST_SAVE_NO_DUPS        # не сохранять дубли в файл
 setopt HIST_FIND_NO_DUPS        # пропускать дубли при поиске по истории
+setopt HIST_IGNORE_SPACE        # не писать в историю команды с ведущим пробелом
+setopt HIST_REDUCE_BLANKS       # убирать лишние пробелы перед записью в историю
+
+setopt AUTO_CD                  # `dirname` без `cd` переходит в каталог
+setopt INTERACTIVE_COMMENTS     # `#...` в интерактивном вводе — комментарий, а не ошибка
+setopt EXTENDED_GLOB            # расширенные шаблоны глобов (^, ~, # и т.п.)
 
 # Стрелки вверх/вниз ищут по префиксу уже введённой команды.
 bindkey '^[[A' history-beginning-search-backward
 bindkey '^[[B' history-beginning-search-forward
+
+# Home / End / Delete: сначала terminfo (учитывает реальный $TERM — это
+# критично в tmux/SSH, где TERM подменяется на screen-256color/tmux-256color
+# и обычные xterm-последовательности могут не совпадать), затем сырые
+# escape-последовательности как fallback на случай отсутствующей или неполной
+# terminfo-записи (частый случай в urxvt/старых линукс-консолях).
+[[ -n "${terminfo[khome]:-}" ]] && bindkey "${terminfo[khome]}" beginning-of-line
+[[ -n "${terminfo[kend]:-}"  ]] && bindkey "${terminfo[kend]}"  end-of-line
+[[ -n "${terminfo[kdch1]:-}" ]] && bindkey "${terminfo[kdch1]}" delete-char
+
+bindkey '\e[1~' beginning-of-line   # Home, fallback (VT220/линукс-консоль)
+bindkey '\e[7~' beginning-of-line   # Home, fallback (rxvt/urxvt)
+bindkey '\e[H'  beginning-of-line   # Home, fallback (xterm/screen)
+bindkey '\e[4~' end-of-line         # End, fallback (VT220/линукс-консоль)
+bindkey '\e[8~' end-of-line         # End, fallback (rxvt/urxvt)
+bindkey '\e[F'  end-of-line         # End, fallback (xterm/screen)
+bindkey '\e[3~' delete-char         # Delete, fallback (большинство терминалов)
+
+# Ctrl+стрелки — переход по словам вперёд/назад. Terminfo обычно не хранит
+# capability для Ctrl+стрелок, поэтому сразу перечисляем варианты
+# escape-последовательностей, реально встречающиеся в разных терминалах и
+# внутри tmux (xterm/screen и rxvt дают разные коды).
+bindkey '\e[1;5C' forward-word      # Ctrl+Right, xterm/screen
+bindkey '\e[1;5D' backward-word     # Ctrl+Left, xterm/screen
+bindkey '\eOc' forward-word         # Ctrl+Right, rxvt
+bindkey '\eOd' backward-word        # Ctrl+Left, rxvt
+bindkey '\e[c' forward-word         # Ctrl+Right, ещё один встречающийся вариант
+bindkey '\e[d' backward-word        # Ctrl+Left, ещё один встречающийся вариант
+
+# Редактор по умолчанию: nvim, если поставлен модулем nvim.sh, иначе vim,
+# либо не трогаем переменные вовсе (пусть остаются системные значения/пусто).
+if command -v nvim >/dev/null 2>&1; then
+  export EDITOR="nvim"
+  export VISUAL="nvim"
+elif command -v vim >/dev/null 2>&1; then
+  export EDITOR="vim"
+  export VISUAL="vim"
+fi
+
+export PAGER="less"
+# -R: показывать ANSI-цвета как есть (нужно для delta/bat и т.п.), а не
+#     escape-последовательностями;
+# -F: если вывод помещается на один экран — сразу выйти, не открывать pager;
+# -X: не очищать экран при выходе (сохранить вывод команды в терминале).
+export LESS='-R -F -X'
 
 # tmux: если модуль tmux.sh ставил хук авто-подключения к существующей
 # сессии — подключаем. Условно, чтобы zsh.sh не зависел от tmux.sh.
@@ -81,3 +132,8 @@ if command -v fzf >/dev/null 2>&1; then
 fi
 
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
+
+# Локальные правки пользователя: этот файл перезаписывается install.sh при
+# каждом запуске, поэтому здесь нет места для собственных настроек — они
+# подключаются отдельным файлом, который install.sh не трогает.
+[[ ! -f ~/.zshrc.local ]] || source ~/.zshrc.local
