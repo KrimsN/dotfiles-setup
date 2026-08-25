@@ -18,6 +18,7 @@
 [![Debian 12](https://img.shields.io/github/actions/workflow/status/KrimsN/krimsnrc/test-debian.yml?label=Debian%2012&logo=debian&logoColor=white&labelColor=A81D33&style=flat)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-debian.yml)
 [![Fedora Latest](https://img.shields.io/github/actions/workflow/status/KrimsN/krimsnrc/test-fedora.yml?label=Fedora%20Latest&logo=fedora&logoColor=white&labelColor=51A2DA&style=flat)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-fedora.yml)
 [![CentOS Stream 9](https://img.shields.io/github/actions/workflow/status/KrimsN/krimsnrc/test-centos.yml?label=CentOS%20Stream%209&logo=centos&logoColor=white&labelColor=262577&style=flat)](https://github.com/KrimsN/krimsnrc/actions/workflows/test-centos.yml)
+[![Lint](https://img.shields.io/github/actions/workflow/status/KrimsN/krimsnrc/lint.yml?label=Lint&logo=gnu-bash&logoColor=white&labelColor=4EAA25&style=flat)](https://github.com/KrimsN/krimsnrc/actions/workflows/lint.yml)
 
 Набор скриптов для быстрой настройки unix-окружения на Ubuntu, Debian,
 Fedora и CentOS: zsh + oh-my-zsh + Powerlevel10k (+ Nerd Font-шрифты),

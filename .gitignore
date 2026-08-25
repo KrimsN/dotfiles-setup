@@ -10,3 +10,7 @@ Thumbs.db
 # Local overrides / secrets
 *.local
 .env
+
+# PowerShell редирект-артефакты (ошибки при перенаправлении вывода)
+*;C
+*;D
