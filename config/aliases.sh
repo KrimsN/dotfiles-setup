@@ -40,3 +40,8 @@ alias gl='git log --oneline --graph --decorate'
 alias uvinit='uv venv && source .venv/bin/activate'
 alias uvr='uv run python'
 alias uva='uv add'
+
+# Локальные алиасы пользователя: этот файл перезаписывается install.sh при
+# каждом запуске, поэтому здесь нет места для собственных настроек — они
+# подключаются отдельным файлом, который install.sh не трогает.
+[[ ! -f ~/.config/knrc/aliases.local.sh ]] || source ~/.config/knrc/aliases.local.sh

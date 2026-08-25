@@ -34,7 +34,29 @@ aliases::install() {
   rcfile::upsert_block "$HOME/.bashrc" "aliases" \
     "[ -f \"$snippet_dest\" ] && source \"$snippet_dest\""
 
+  aliases::create_local_file
+
   log::info "aliases: установлены ($snippet_dest)"
+}
+
+# ~/.config/knrc/aliases.local.sh — точка расширения для собственных
+# алиасов пользователя (см. подключение в config/aliases.sh). install.sh
+# его не трогает при повторных запусках, поэтому создаём только если
+# файла ещё нет.
+aliases::create_local_file() {
+  local dest="$DOTFILES_STATE_DIR/aliases.local.sh"
+
+  if [ -f "$dest" ]; then
+    log::info "aliases: $dest уже существует, не трогаю"
+    return 0
+  fi
+
+  cat > "$dest" <<'EOF'
+# ~/.config/knrc/aliases.local.sh — сюда пишите все алиасы, которые
+# хотите сохранить между запусками install.sh. Этот файл он не создаёт
+# заново и не перезаписывает, в отличие от ~/.config/knrc/aliases.sh.
+EOF
+  log::info "aliases: создан $dest"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

@@ -80,6 +80,25 @@ zsh::write_zshrc() {
   log::info "zsh: ~/.zshrc обновлён"
 }
 
+# ~/.zshrc.local — точка расширения для собственных настроек пользователя
+# (см. подключение в config/zshrc). install.sh его не трогает при
+# повторных запусках, поэтому создаём только если файла ещё нет.
+zsh::create_local_file() {
+  local dest="$HOME/.zshrc.local"
+
+  if [ -f "$dest" ]; then
+    log::info "zsh: ~/.zshrc.local уже существует, не трогаю"
+    return 0
+  fi
+
+  cat > "$dest" <<'EOF'
+# ~/.zshrc.local — сюда пишите всё, что хотите сохранить между
+# запусками install.sh. Этот файл он не создаёт заново и не
+# перезаписывает, в отличие от ~/.zshrc.
+EOF
+  log::info "zsh: создан ~/.zshrc.local"
+}
+
 # Спрашивает (или берёт из env/дефолта), нужно ли делать zsh login-shell
 # по умолчанию. Возвращает 0 (да) или 1 (нет) через return code.
 zsh::_want_default_shell() {
@@ -136,6 +155,7 @@ zsh::install() {
   zsh::install_powerlevel10k
   zsh::install_plugins
   zsh::write_zshrc
+  zsh::create_local_file
   zsh::configure_shell
   log::info "zsh: готово. Настройка Powerlevel10k (мастер 'p10k configure') запустится при первом интерактивном запуске zsh."
 }
