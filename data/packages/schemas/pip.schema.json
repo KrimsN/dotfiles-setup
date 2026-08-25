@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Метод 'pip'",
+  "description": "Схема для data/packages/methods/pip.json. Ключ верхнего уровня (кроме $comment) — имя пакета из registry.json.",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string" }
+  },
+  "additionalProperties": {
+    "type": "object",
+    "required": ["pip_name"],
+    "properties": {
+      "pip_name": { "type": "string", "description": "Имя пакета на PyPI." },
+      "requires_pkg": { "type": "string", "description": "Системный пакет (через os::pkg_install), который нужен для наличия pip3 в PATH перед 'pip3 install'." }
+    },
+    "additionalProperties": false
+  }
+}

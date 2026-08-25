@@ -14,6 +14,11 @@ rcfile::upsert_block() {
   local begin="# >>> knrc:${marker} >>>"
   local end="# <<< knrc:${marker} <<<"
 
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] обновил бы блок '$marker' в $file"
+    return 0
+  fi
+
   touch "$file"
 
   if grep -qF "$begin" "$file"; then

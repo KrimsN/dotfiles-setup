@@ -1,0 +1,14 @@
+{
+  "$schema": "../schemas/pkg.schema.json",
+  "$comment": "Метод 'pkg': имя пакета в каждом пакетном менеджере. Сейчас у всех пакетов проекта имя совпадает во всех трёх менеджерах, но поле оставлено per-manager намеренно — реальный кейс расхождения (fd -> fd-find) уже есть, просто он одинаков для apt/dnf/yum, а не различается между ними.",
+
+  "tldr":    { "apt": "tldr",    "dnf": "tldr",    "yum": "tldr" },
+  "ripgrep": { "apt": "ripgrep", "dnf": "ripgrep", "yum": "ripgrep" },
+  "fd":      { "apt": "fd-find", "dnf": "fd-find", "yum": "fd-find" },
+  "fzf":     { "apt": "fzf",     "dnf": "fzf",     "yum": "fzf" },
+  "bat":     { "apt": "bat",     "dnf": "bat",     "yum": "bat" },
+  "jq":      { "apt": "jq",      "dnf": "jq",      "yum": "jq" },
+  "httpie":  { "apt": "httpie",  "dnf": "httpie",  "yum": "httpie" },
+  "delta":   { "apt": "git-delta", "dnf": "git-delta", "yum": "git-delta" },
+  "zoxide":  { "apt": "zoxide",  "dnf": "zoxide",  "yum": "rust-zoxide" }
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Метод 'curl-sh' — официальный установщик проекта",
+  "description": "Схема для data/packages/methods/curl-sh.json. Ключ верхнего уровня (кроме $comment) — имя пакета из registry.json.",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string" }
+  },
+  "additionalProperties": {
+    "type": "object",
+    "required": ["url", "check"],
+    "properties": {
+      "url": { "type": "string", "format": "uri", "description": "URL инсталлера для `curl -fsSL <url> | sh`." },
+      "env": {
+        "type": "object",
+        "additionalProperties": { "type": "string" },
+        "description": "Переменные окружения для инсталлера (`env K=V ... sh`). Значения могут содержать bash-переменные ($HOME) — расширяются диспетчером параметрической подстановкой, не eval."
+      },
+      "check": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "const": "command_or_path" },
+          "command": { "type": "string", "description": "Имя команды для `command -v`." },
+          "path": { "type": "string", "description": "Путь-альтернатива, если PATH ещё не обновлён в текущем процессе." }
+        },
+        "additionalProperties": false,
+        "description": "Как определить, что пакет уже установлен (идемпотентность) — единого соглашения вроде github-метода тут нет."
+      }
+    },
+    "additionalProperties": false
+  }
+}

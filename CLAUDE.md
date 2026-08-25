@@ -34,6 +34,13 @@
   принудительно отключает все вопросы и использует
   дефолты/env-переменные — нужен для автоматизации и для идемпотентных
   повторных запусков на уже настроенной машине.
+- **Dry-run.** Флаг `--dry-run` (или `DRY_RUN=1`) — показать, что было бы
+  сделано, не меняя ничего на диске/в системе (пакеты, rc-блоки,
+  бинарники с GitHub Releases). Перехват на уровне общих точек мутации
+  в `scripts/lib/*`, не на уровне отдельных модулей — не 100% покрытие,
+  см. [docs/modules/install.md](docs/modules/install.md).
+- **Лог последнего прогона.** Каждый запуск `install.sh` дописывает
+  строку в `~/.knrc.log` (время, режим, модули, дистрибутив, результат).
 - Конкретные имена env-переменных/флагов под отдельные опции (режим shell,
   список опциональных пакетов и т.д.) определить при реализации
   соответствующего модуля.
@@ -111,9 +118,9 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
 ## Статус
 
 Проект функционально завершён: все модули из списка программ написаны
-и протестированы (12 модулей в ALL_MODULES, включая nvim,
-python-tools и git-config; плюс опциональный zsh-terminal-app вне ALL_MODULES), есть
-единый лаунчер
+и протестированы (13 модулей в ALL_MODULES, включая nvim,
+python-tools, git-config и ssh-config; плюс опциональный
+zsh-terminal-app вне ALL_MODULES), есть единый лаунчер
 `install.sh`, работающий как через `curl | bash` на чистой машине (без
 git/curl), так и из склонированного репозитория.
 
@@ -133,6 +140,7 @@ git/curl), так и из склонированного репозитория.
 | `modules/cli-tools.sh` | [docs/modules/cli-tools.md](docs/modules/cli-tools.md) |
 | `modules/git-ecosystem.sh` | [docs/modules/git-ecosystem.md](docs/modules/git-ecosystem.md) |
 | `modules/git-config.sh` | [docs/modules/git-config.md](docs/modules/git-config.md) |
+| `modules/ssh-config.sh` | [docs/modules/ssh-config.md](docs/modules/ssh-config.md) |
 | `modules/docker.sh` | [docs/modules/docker.md](docs/modules/docker.md) |
 | `modules/python-tools.sh` | [docs/modules/python-tools.md](docs/modules/python-tools.md) |
 | `scripts/lib/epel.sh` | [docs/modules/epel.md](docs/modules/epel.md) |
