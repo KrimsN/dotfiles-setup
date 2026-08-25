@@ -1,6 +1,6 @@
 {
   "$schema": "../schemas/pkg.schema.json",
-  "$comment": "Метод 'pkg': имя пакета в каждом пакетном менеджере. Сейчас у всех пакетов проекта имя совпадает во всех трёх менеджерах, но поле оставлено per-manager намеренно — реальный кейс расхождения (fd -> fd-find) уже есть, просто он одинаков для apt/dnf/yum, а не различается между ними.",
+  "$comment": "Метод 'pkg': имя пакета в каждом пакетном менеджере. У большинства пакетов проекта имя совпадает во всех трёх менеджерах, но поле оставлено per-manager намеренно — реальные кейсы расхождения: fd -> fd-find (одинаков для apt/dnf/yum, просто отличается от канонического имени 'fd'), dig -> dnsutils/bind-utils (apt vs dnf/yum) и mtr -> mtr-tiny/mtr (apt тянет GUI-зависимости под именем 'mtr', CLI-only пакет называется 'mtr-tiny').",
 
   "tldr":    { "apt": "tldr",    "dnf": "tldr",    "yum": "tldr" },
   "ripgrep": { "apt": "ripgrep", "dnf": "ripgrep", "yum": "ripgrep" },
@@ -10,5 +10,10 @@
   "jq":      { "apt": "jq",      "dnf": "jq",      "yum": "jq" },
   "httpie":  { "apt": "httpie",  "dnf": "httpie",  "yum": "httpie" },
   "delta":   { "apt": "git-delta", "dnf": "git-delta", "yum": "git-delta" },
-  "zoxide":  { "apt": "zoxide",  "dnf": "zoxide",  "yum": "rust-zoxide" }
+  "zoxide":  { "apt": "zoxide",  "dnf": "zoxide",  "yum": "rust-zoxide" },
+  "rsync":   { "apt": "rsync",   "dnf": "rsync",   "yum": "rsync" },
+  "dig":     { "apt": "dnsutils", "dnf": "bind-utils", "yum": "bind-utils" },
+  "lsof":    { "apt": "lsof",    "dnf": "lsof",    "yum": "lsof" },
+  "mtr":     { "apt": "mtr-tiny", "dnf": "mtr",    "yum": "mtr" },
+  "ncdu":    { "apt": "ncdu",    "dnf": "ncdu",    "yum": "ncdu" }
 }

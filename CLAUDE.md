@@ -85,6 +85,12 @@ tldr, fastfetch — изначально был выбран neofetch, но пр
 поддерживаемый форк) единообразно на всех дистрибутивах — решение
 пользователя, см. modules/extras.sh.
 
+### Диагностические утилиты
+rsync, dig (dnsutils на apt / bind-utils на dnf-yum), ncdu (на CentOS —
+через EPEL), lsof, mtr (mtr-tiny на apt, чтобы не тянуть GUI-зависимости
+метапакета mtr; mtr на dnf/yum) — добавлены по согласованию с
+пользователем (не входили в изначальный список), см. modules/diagnostics.md.
+
 ### Neovim
 Конфиг (init.lua) + менеджер плагинов (lazy.nvim) + базовый набор
 плагинов: дерево файлов, статус-бар, нечёткий поиск, treesitter,
@@ -118,8 +124,8 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
 ## Статус
 
 Проект функционально завершён: все модули из списка программ написаны
-и протестированы (13 модулей в ALL_MODULES, включая nvim,
-python-tools, git-config и ssh-config; плюс опциональный
+и протестированы (14 модулей в ALL_MODULES, включая nvim,
+python-tools, git-config, ssh-config и diagnostics; плюс опциональный
 zsh-terminal-app вне ALL_MODULES), есть единый лаунчер
 `install.sh`, работающий как через `curl | bash` на чистой машине (без
 git/curl), так и из склонированного репозитория.
@@ -143,6 +149,7 @@ git/curl), так и из склонированного репозитория.
 | `modules/ssh-config.sh` | [docs/modules/ssh-config.md](docs/modules/ssh-config.md) |
 | `modules/docker.sh` | [docs/modules/docker.md](docs/modules/docker.md) |
 | `modules/python-tools.sh` | [docs/modules/python-tools.md](docs/modules/python-tools.md) |
+| `modules/diagnostics.sh` | [docs/modules/diagnostics.md](docs/modules/diagnostics.md) |
 | `scripts/lib/epel.sh` | [docs/modules/epel.md](docs/modules/epel.md) |
 | `modules/base.sh` | [docs/modules/base.md](docs/modules/base.md) |
 | `scripts/lib/github-release.sh` | [docs/modules/github-release.md](docs/modules/github-release.md) |

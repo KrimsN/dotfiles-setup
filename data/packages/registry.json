@@ -109,6 +109,41 @@
         { "type": "custom", "priority": 1, "requires": ["uv"], "comment": "ставится через `uv tool install ruff` — изолированное окружение и единообразное обновление (`uv tool upgrade ruff`) без отдельной логики распаковки бинарника", "handler": "python_tools::install_ruff" },
         { "type": "github", "priority": 2, "comment": "резервный метод на случай недоступности/поломки uv-тулчейна — ruff публикует собственные статические бинарники независимо от uv. НЕ проверено вживую (tar tzf): внутренняя структура архива предполагается по аналогии с остальными cargo-dist пакетами, требует проверки перед реализацией диспетчера" }
       ]
+    },
+    {
+      "name": "rsync",
+      "source_url": "https://github.com/RsyncProject/rsync",
+      "methods": [
+        { "type": "pkg", "priority": 1, "comment": "одинаковое имя пакета и в базовых репах во всех целевых дистрибутивах (apt/dnf/yum) — EPEL не требуется, проверено в контейнерах" }
+      ]
+    },
+    {
+      "name": "dig",
+      "source_url": "https://www.isc.org/bind/",
+      "methods": [
+        { "type": "pkg", "priority": 1, "comment": "бинарник dig входит в разные пакеты под разными именами: dnsutils на apt (Debian/Ubuntu), bind-utils на dnf/yum (Fedora/CentOS) — см. methods/pkg.json. В базовых репах везде, EPEL не требуется (bind-utils есть в AppStream CentOS Stream 9), проверено в контейнерах" }
+      ]
+    },
+    {
+      "name": "lsof",
+      "source_url": "https://github.com/lsof-org/lsof",
+      "methods": [
+        { "type": "pkg", "priority": 1, "comment": "одинаковое имя пакета и в базовых репах во всех целевых дистрибутивах — EPEL не требуется, проверено в контейнерах" }
+      ]
+    },
+    {
+      "name": "mtr",
+      "source_url": "https://github.com/traviscross/mtr",
+      "methods": [
+        { "type": "pkg", "priority": 1, "comment": "имя пакета расходится: на apt (Debian/Ubuntu) 'mtr' — метапакет, тянущий GTK/X11-зависимости (libgtk2.0-0 и т.п.) для ncurses-инструмента, который нам не нужен в графическом виде — берём 'mtr-tiny' (тот же бинарник /usr/bin/mtr, без GUI-зависимостей). На dnf/yum пакет 'mtr' уже CLI-only, разделения нет — см. methods/pkg.json. В базовых репах везде, EPEL не требуется, проверено в контейнерах" }
+      ]
+    },
+    {
+      "name": "ncdu",
+      "source_url": "https://code.blicky.net/yorhel/ncdu",
+      "methods": [
+        { "type": "pkg", "priority": 1, "prereq": "epel::ensure", "comment": "в базовых репах apt/dnf (Debian/Ubuntu/Fedora); на CentOS Stream 9 живёт в EPEL (проверено в контейнере: ncdu 1.22 доступен как epel-пакет) — аналогично btop в modules/base.sh" }
+      ]
     }
   ]
 }
