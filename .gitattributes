@@ -1,0 +1,6 @@
+# Bash-скрипты выполняются в Linux-контейнерах (см. scripts/test-module.sh,
+# который монтирует рабочую директорию как есть) — CRLF ломает шебанг
+# (`/usr/bin/env: 'bash\r': No such file or directory`). Принудительно LF
+# независимо от core.autocrlf на клиенте (реальный баг: на Windows с
+# autocrlf=true часть .sh-файлов получала CRLF при checkout).
+*.sh text eol=lf
