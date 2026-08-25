@@ -55,6 +55,22 @@ curl -fsSL https://raw.githubusercontent.com/KrimsN/krimsnrc/master/install.sh |
 DOTFILES_MODULES="base zsh tmux" ./install.sh
 ```
 
+## Диагностика
+
+Вместе с модулями `install.sh` ставит команду `knrc` (в
+`~/.local/bin`). Проверить, что на машине реально встало, а что нет:
+
+```bash
+knrc doctor
+```
+
+Строка на проверку со статусом `ok` / `отсутствует` / `сломано`,
+итоговый счётчик и ненулевой код возврата при проблемах — команду можно
+ставить шагом в CI. Она ничего не чинит и не устанавливает; чтобы
+доустановить недостающее, нужен обычный `install.sh`. Сузить набор
+проверок — `knrc doctor --modules=zsh,tmux`. Подробности — в
+[docs/modules/doctor.md](docs/modules/doctor.md).
+
 ## Статус
 
 Все модули реализованы и протестированы на Ubuntu, Debian, Fedora и

@@ -41,9 +41,38 @@
   см. [docs/modules/install.md](docs/modules/install.md).
 - **Лог последнего прогона.** Каждый запуск `install.sh` дописывает
   строку в `~/.knrc.log` (время, режим, модули, дистрибутив, результат).
+- **Диагностика.** `knrc doctor` — построчный отчёт о состоянии машины
+  (что встало, чего нет, что сломано), ненулевой код возврата при
+  проблемах, ничего не чинит. См. раздел "Команда knrc" ниже и
+  [docs/modules/doctor.md](docs/modules/doctor.md).
 - Конкретные имена env-переменных/флагов под отдельные опции (режим shell,
   список опциональных пакетов и т.д.) определить при реализации
   соответствующего модуля.
+
+## Команда `knrc` (зафиксировано при реализации doctor)
+
+Операции над **уже настроенной** машиной живут не в `install.sh`, а в
+отдельном CLI. `install.sh` всегда (не модулем, а частью ядра) ставит
+тонкий шим `~/.local/bin/knrc`, который делает `exec` на
+`scripts/knrc.sh` в каталоге репозитория — вся логика остаётся в
+репозитории, поэтому обновление CLI это `git pull`, а не переустановка
+бинарника, и sudo не требуется.
+
+- `knrc doctor [--modules=LIST]` — диагностика, см.
+  [docs/modules/doctor.md](docs/modules/doctor.md).
+- `knrc install [флаги]` — прогнать `install.sh`.
+- Из клона то же самое доступно как `bash scripts/knrc.sh <команда>`, без
+  установки шима.
+
+**Будущие `knrc update` и `knrc uninstall` добавляются сюда же** — одной
+веткой `case` в `scripts/knrc.sh` и одним файлом `scripts/<команда>.sh`
+с публичной функцией `<команда>::run`, по образцу `doctor`. Заглушек для
+нереализованных команд в диспетчере нет намеренно.
+
+Список модулей (`KNRC_ALL_MODULES`) вынесен в
+`scripts/lib/modules.sh` — общий для `install.sh` (что ставить) и
+`doctor` (что проверять), чтобы новый модуль не мог появиться в
+установке и молча выпасть из диагностики.
 
 ## Список программ (зафиксировано пользователем)
 
@@ -129,11 +158,12 @@ zsh-autosuggestions, fast-syntax-highlighting, zsh-completions
 ## Статус
 
 Проект функционально завершён: все модули из списка программ написаны
-и протестированы (14 модулей в ALL_MODULES, включая nvim,
+и протестированы (14 модулей в KNRC_ALL_MODULES, включая nvim,
 python-tools, git-config, ssh-config и diagnostics; плюс опциональный
-zsh-terminal-app вне ALL_MODULES), есть единый лаунчер
+zsh-terminal-app вне KNRC_ALL_MODULES), есть единый лаунчер
 `install.sh`, работающий как через `curl | bash` на чистой машине (без
-git/curl), так и из склонированного репозитория.
+git/curl), так и из склонированного репозитория, и команда `knrc` для
+операций над уже настроенной машиной (`knrc doctor`).
 
 ### Реализованные модули
 
@@ -145,6 +175,8 @@ git/curl), так и из склонированного репозитория.
 | `scripts/lib/os-detect.sh` | [docs/modules/os-detect.md](docs/modules/os-detect.md) |
 | `modules/zsh.sh` | [docs/modules/zsh.md](docs/modules/zsh.md) |
 | `scripts/lib/rcfile.sh` | [docs/modules/rcfile.md](docs/modules/rcfile.md) |
+| `scripts/lib/localbin.sh` | [docs/modules/localbin.md](docs/modules/localbin.md) |
+| `scripts/lib/modules.sh` | [docs/modules/modules-list.md](docs/modules/modules-list.md) |
 | `modules/tmux.sh` | [docs/modules/tmux.md](docs/modules/tmux.md) |
 | `modules/nvim.sh` | [docs/modules/nvim.md](docs/modules/nvim.md) |
 | `modules/aliases.sh` | [docs/modules/aliases.md](docs/modules/aliases.md) |
@@ -161,6 +193,7 @@ git/curl), так и из склонированного репозитория.
 | `scripts/lib/log.sh` | [docs/modules/log.md](docs/modules/log.md) |
 | `modules/extras.sh` | [docs/modules/extras.md](docs/modules/extras.md) |
 | `install.sh` | [docs/modules/install.md](docs/modules/install.md) |
+| `scripts/knrc.sh` + `scripts/doctor.sh` (команда `knrc doctor`) | [docs/modules/doctor.md](docs/modules/doctor.md) |
 | `modules/fonts.sh` | [docs/modules/fonts.md](docs/modules/fonts.md) |
 | `modules/zsh-terminal-app.sh` (опциональный, вне ALL_MODULES) | [docs/modules/zsh-terminal-app.md](docs/modules/zsh-terminal-app.md) |
 

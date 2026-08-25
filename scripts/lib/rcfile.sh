@@ -49,6 +49,33 @@ rcfile::upsert_block() {
   } >> "$file"
 }
 
+# rcfile::remove_block <file> <marker>
+# Удаляет ранее вставленный блок, если он есть; отсутствие файла или
+# самого блока — не ошибка (идемпотентно). Нужен при переименовании
+# маркера (миграция уже установленных машин).
+rcfile::remove_block() {
+  local file="$1" marker="$2"
+  local begin="# >>> knrc:${marker} >>>"
+  local end="# <<< knrc:${marker} <<<"
+
+  [ -f "$file" ] || return 0
+  grep -qF "$begin" "$file" || return 0
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] удалил бы блок '$marker' из $file"
+    return 0
+  fi
+
+  local tmp
+  tmp="$(mktemp)"
+  awk -v begin="$begin" -v end="$end" '
+    $0 == begin { skip=1; next }
+    $0 == end   { skip=0; next }
+    !skip { print }
+  ' "$file" > "$tmp"
+  mv "$tmp" "$file"
+}
+
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
   echo "scripts/lib/rcfile.sh: подключать через source, не запускать напрямую" >&2
   exit 1

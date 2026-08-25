@@ -2,8 +2,8 @@
 # Установка uv (пакетный менеджер и менеджер версий Python, написан на
 # Rust) и ruff (линтер/форматтер на Rust) через `uv tool install`.
 # Не запускать напрямую — подключать через `source` после
-# scripts/lib/log.sh, scripts/lib/rcfile.sh, scripts/lib/pkg-registry.sh
-# (нужны rcfile::upsert_block и pkg::install).
+# scripts/lib/log.sh, scripts/lib/localbin.sh, scripts/lib/pkg-registry.sh
+# (нужны localbin::ensure_path и pkg::install).
 #
 # Публичная точка входа: python_tools::install
 #
@@ -24,41 +24,23 @@
 # управляется отдельным снипетом ~/.config/knrc/path.sh — тот же
 # паттерн, что у aliases.sh/tmux.sh: подключается условной строкой из
 # config/zshrc (если стоит модуль zsh) и управляемым блоком в
-# ~/.bashrc через rcfile::upsert_block. Официальному uv-инсталлеру
+# ~/.bashrc. Сам снипет пишет не этот
+# модуль, а scripts/lib/localbin.sh: в тот же каталог install.sh
+# ставит лаунчер `knrc`, и PATH нужен даже когда модуль python-tools
+# не выбран. Официальному uv-инсталлеру
 # правка shell rc отключена явно (INSTALLER_NO_MODIFY_PATH=1, см.
 # data/packages/methods/curl-sh.json), чтобы он не писал в файлы,
 # которыми управляет сам проект (zsh.sh перезаписывает ~/.zshrc целиком
 # из шаблона при каждом запуске — сторонние правки в нём не переживут
 # повторный прогон).
 #
-# python_tools::ensure_path вызывается МЕЖДУ установкой uv и ruff (не
+# localbin::ensure_path вызывается МЕЖДУ установкой uv и ruff (не
 # после обоих) — `uv tool install ruff` внутри python_tools::install_ruff
 # должен найти `uv` в PATH уже в текущем процессе, без перелогина.
 
 set -euo pipefail
 
-DOTFILES_STATE_DIR="${DOTFILES_STATE_DIR:-$HOME/.config/knrc}"
 PYTHON_TOOLS_BIN_DIR="$HOME/.local/bin"
-
-python_tools::ensure_path() {
-  mkdir -p "$DOTFILES_STATE_DIR"
-  local snippet_dest="$DOTFILES_STATE_DIR/path.sh"
-
-  cat > "$snippet_dest" <<EOF
-# Managed by .knrc — PATH для uv и \`uv tool install\` (~/.local/bin).
-case ":\$PATH:" in
-  *":$PYTHON_TOOLS_BIN_DIR:"*) ;;
-  *) export PATH="$PYTHON_TOOLS_BIN_DIR:\$PATH" ;;
-esac
-EOF
-
-  rcfile::upsert_block "$HOME/.bashrc" "python-tools-path" \
-    "[ -f \"$snippet_dest\" ] && source \"$snippet_dest\""
-
-  # Подключаем в текущем процессе, чтобы python_tools::install_ruff ниже
-  # уже видел свежепоставленный uv без перелогина.
-  export PATH="$PYTHON_TOOLS_BIN_DIR:$PATH"
-}
 
 # custom-обработчик для пакета 'ruff' в data/packages/registry.json
 # (метод type=custom, handler="python_tools::install_ruff") — диспетчер
@@ -77,7 +59,7 @@ python_tools::install_ruff() {
 
 python_tools::install() {
   pkg::install uv
-  python_tools::ensure_path
+  localbin::ensure_path
   pkg::install ruff
   log::info "python-tools: готово."
 }

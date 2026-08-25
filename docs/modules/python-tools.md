@@ -18,7 +18,7 @@
 установленным `uv`, не самостоятельный источник), поэтому
 `registry.json` ссылается на неё по имени как на `custom`-обработчик
 (`"handler": "python_tools::install_ruff"`). Идемпотентность и порядок
-вызова (после `python_tools::ensure_path`, чтобы `uv` уже был в PATH
+вызова (после `localbin::ensure_path`, чтобы `uv` уже был в PATH
 текущего процесса) не изменились.
 
 ## Решения пользователя
@@ -44,6 +44,12 @@
 тем же паттерном, что `aliases.sh`/`tmux.sh`: снипет
 `~/.config/knrc/path.sh`, подключаемый условной строкой из `config/zshrc`
 и управляемым блоком в `~/.bashrc` через `rcfile::upsert_block`.
+
+Сам снипет пишет не этот модуль, а `localbin::ensure_path`
+(`scripts/lib/localbin.sh`, см. [localbin.md](localbin.md)): в тот же
+`~/.local/bin` `install.sh` ставит лаунчер `knrc`, и каталог нужен в
+PATH независимо от того, выбран ли модуль python-tools. Порядок вызова
+внутри `python_tools::install` не изменился — между `uv` и `ruff`.
 
 ## Тестирование
 

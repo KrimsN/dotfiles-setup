@@ -23,6 +23,23 @@
 (`ZSH_DEFAULT_SHELL`, `DOCKER_ADD_USER_TO_GROUP`), install.sh их не
 трогает и не дублирует.
 
+## Лаунчер `knrc`
+
+Помимо модулей `install.sh` всегда ставит команду `knrc`
+(`install_sh::_install_launcher`) — тонкий шим в `~/.local/bin/knrc`,
+делающий `exec` на `scripts/knrc.sh` в каталоге репозитория. Не модуль, а
+часть ядра: диагностика должна быть на машине при любом наборе выбранных
+модулей. Перед этим вызывается `localbin::ensure_path`, чтобы
+`~/.local/bin` оказался в PATH (см.
+[localbin.md](localbin.md)). Подчиняется `DRY_RUN`. Обоснование схемы и
+сравнение с альтернативами (`install.sh doctor`, голый
+`scripts/doctor.sh`) — в [doctor.md](doctor.md).
+
+Список модулей `KNRC_ALL_MODULES` вынесен в `scripts/lib/modules.sh` и
+подключается в `install_sh::main` — в начале файла его определить
+нельзя, при `curl | bash` репозитория ещё нет (см.
+[modules-list.md](modules-list.md)).
+
 ## `--dry-run` / `DRY_RUN=1`
 
 Перехват на уровне трёх общих точек мутации, через которые проходят все

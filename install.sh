@@ -23,7 +23,12 @@
 # Каждый прогон дописывает одну строку в ~/.knrc.log (время, режим,
 # список модулей, дистрибутив, результат) — см. install_sh::_write_log.
 #
-# Модуль zsh-terminal-app НЕ входит в ALL_MODULES и не предлагается ни
+# Помимо модулей install.sh всегда ставит команду `knrc`
+# (~/.local/bin/knrc, см. install_sh::_install_launcher) — точку входа
+# для диагностики и будущих операций над уже настроенной машиной:
+# `knrc doctor`.
+#
+# Модуль zsh-terminal-app НЕ входит в KNRC_ALL_MODULES и не предлагается ни
 # в общей установке, ни в интерактивном меню — запускается только
 # явно: DOTFILES_MODULES=zsh-terminal-app ./install.sh. Он создаёт
 # приложение "терминал сразу в zsh" и хоткей для случая, когда zsh
@@ -92,7 +97,9 @@ install_sh::_banner() {
 
 REPO_URL="${DOTFILES_REPO_URL:-https://github.com/KrimsN/krimsnrc.git}"
 DEFAULT_INSTALL_DIR="$HOME/.local/share/knrc"
-ALL_MODULES=(base zsh tmux nvim aliases cli-tools git-ecosystem git-config ssh-config docker python-tools extras diagnostics fonts)
+# Список модулей (KNRC_ALL_MODULES) приходит из scripts/lib/modules.sh —
+# его подключает install_sh::main после того, как репозиторий на месте.
+# Здесь его определить нельзя: при `curl | bash` репозитория ещё нет.
 
 for arg in "$@"; do
   case "$arg" in
@@ -225,7 +232,7 @@ install_sh::_selected_modules() {
   fi
 
   if [ "${NONINTERACTIVE:-0}" = "1" ] || [ ! -r /dev/tty ]; then
-    echo "${ALL_MODULES[*]}"
+    echo "${KNRC_ALL_MODULES[*]}"
     return 0
   fi
 
@@ -239,13 +246,13 @@ install_sh::_selected_modules() {
   choice="${choice:-1}"
 
   if [ "$choice" != "2" ]; then
-    echo "${ALL_MODULES[*]}"
+    echo "${KNRC_ALL_MODULES[*]}"
     return 0
   fi
 
   local selected=() answer m i=1
-  for m in "${ALL_MODULES[@]}"; do
-    read -r -p "$(log::prompt "  [$i/${#ALL_MODULES[@]}] Установить '$m'? [Y/n] ")" answer < /dev/tty || answer=""
+  for m in "${KNRC_ALL_MODULES[@]}"; do
+    read -r -p "$(log::prompt "  [$i/${#KNRC_ALL_MODULES[@]}] Установить '$m'? [Y/n] ")" answer < /dev/tty || answer=""
     case "$answer" in
       n|N|no|No) ;;
       *) selected+=("$m") ;;
@@ -276,6 +283,41 @@ install_sh::_run_module() {
   esac
 }
 
+# Ставит команду `knrc` в ~/.local/bin — тонкий шим, вся логика остаётся
+# в репозитории (scripts/knrc.sh). Отсюда два следствия, ради которых
+# схема и выбрана: обновление CLI = `git pull` в каталоге репозитория
+# (шим переписывать не нужно), а sudo не требуется вовсе.
+# Не модуль, а часть ядра установки: команда `knrc doctor` должна быть на
+# машине независимо от того, какой набор модулей выбрал пользователь.
+install_sh::_install_launcher() {
+  local repo_dir="$1"
+  local launcher="$HOME/.local/bin/knrc"
+
+  localbin::ensure_path
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы лаунчер $launcher -> $repo_dir/scripts/knrc.sh"
+    return 0
+  fi
+
+  cat > "$launcher" <<EOF
+#!/usr/bin/env bash
+# Managed by .knrc — лаунчер команды knrc, ставится install.sh
+# (install_sh::_install_launcher). Правки здесь бессмысленны: файл
+# перезаписывается при каждом запуске install.sh, а сама логика лежит
+# в репозитории, на который он ссылается.
+set -euo pipefail
+KNRC_REPO_DIR="\${KNRC_REPO_DIR:-$repo_dir}"
+if [ ! -f "\$KNRC_REPO_DIR/scripts/knrc.sh" ]; then
+  echo "knrc: репозиторий не найден в \$KNRC_REPO_DIR — переустановите .knrc" >&2
+  exit 1
+fi
+exec bash "\$KNRC_REPO_DIR/scripts/knrc.sh" "\$@"
+EOF
+  chmod +x "$launcher"
+  log::info "install: команда 'knrc' установлена ($launcher -> $repo_dir)"
+}
+
 install_sh::main() {
   install_sh::_banner
   trap install_sh::_write_log EXIT
@@ -301,6 +343,10 @@ install_sh::main() {
   source "$repo_dir/scripts/lib/rcfile.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/scripts/lib/pkg-registry.sh"
+  # shellcheck disable=SC1091
+  source "$repo_dir/scripts/lib/localbin.sh"
+  # shellcheck disable=SC1091
+  source "$repo_dir/scripts/lib/modules.sh"
 
   # shellcheck disable=SC1091
   source "$repo_dir/modules/base.sh"
@@ -333,6 +379,8 @@ install_sh::main() {
   # shellcheck disable=SC1091
   source "$repo_dir/modules/zsh-terminal-app.sh"
 
+  install_sh::_install_launcher "$repo_dir"
+
   local modules
   modules="$(install_sh::_selected_modules)"
   export DOTFILES_SELECTED_MODULES="$modules"
@@ -356,6 +404,8 @@ install_sh::main() {
   fi
 
   log::info "Готово! Перелогинься (или открой новый терминал), чтобы изменения shell/группы docker применились."
+  echo ""
+  log::info "Проверить состояние машины в любой момент: knrc doctor"
   echo ""
   log::info "Настройка темы Powerlevel10k запустится автоматически при первом"
   log::info "интерактивном запуске zsh. Чтобы перезапустить мастер настройки"
