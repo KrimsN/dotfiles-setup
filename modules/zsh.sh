@@ -158,6 +158,27 @@ zsh::_want_default_shell() {
   esac
 }
 
+# chsh на минимальных образах не всегда есть "из коробки": на
+# Debian/Ubuntu он в пакете passwd (обычно уже стоит, но на урезанных
+# Docker-образах не гарантировано), на Fedora/RHEL8+/CentOS
+# Stream/Rocky/Alma начиная с util-linux 2.36 вынесен в отдельный пакет
+# util-linux-user, а на старых RHEL7/CentOS7 (там только yum, dnf нет)
+# остаётся в util-linux. Ставим защитно, тем же паттерном, что
+# pkg_registry::_ensure_jq для jq — не полагаемся на то, что пакет уже
+# стоит.
+zsh::_ensure_chsh() {
+  command -v chsh >/dev/null 2>&1 && return 0
+  case "$PKG_MANAGER" in
+    apt) os::pkg_install passwd ;;
+    dnf) os::pkg_install util-linux-user ;;
+    yum) os::pkg_install util-linux ;;
+    *)
+      log::err "zsh::_ensure_chsh: PKG_MANAGER не задан — вызови os::detect первым"
+      return 1
+      ;;
+  esac
+}
+
 zsh::configure_shell() {
   local zsh_path current_shell current_user
   zsh_path="$(command -v zsh)"
@@ -178,6 +199,8 @@ zsh::configure_shell() {
       log::info "[dry-run] сделал бы zsh shell'ом по умолчанию для $current_user"
       return 0
     fi
+
+    zsh::_ensure_chsh
 
     if ! grep -qxF "$zsh_path" /etc/shells 2>/dev/null; then
       log::info "zsh: добавляю $zsh_path в /etc/shells"
