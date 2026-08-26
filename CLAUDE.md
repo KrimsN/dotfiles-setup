@@ -76,6 +76,12 @@
 - `knrc install [флаги]` — прогнать `install.sh`.
 - `knrc uninstall [--dry-run|--force|--modules=LIST]` — откат
   установки, см. [docs/modules/uninstall.md](docs/modules/uninstall.md).
+- `knrc harden-ssh [--dry-run|--force|--rollback]` — опционально, только
+  по явному запросу: минимальный харденинг SSH этой машины
+  (root-логин + вход по паролю) после подтверждённого доступа по ключу.
+  Не входит в `KNRC_ALL_MODULES`, не участвует в `doctor`/`uninstall` —
+  свой план и свой откат, см.
+  [docs/modules/harden-ssh.md](docs/modules/harden-ssh.md).
 - Из клона то же самое доступно как `bash scripts/knrc.sh <команда>`, без
   установки шима.
 
@@ -219,6 +225,7 @@ git/curl), так и из склонированного репозитория,
 | `install.sh` | [docs/modules/install.md](docs/modules/install.md) |
 | `scripts/knrc.sh` + `scripts/doctor.sh` (команда `knrc doctor`) | [docs/modules/doctor.md](docs/modules/doctor.md) |
 | `scripts/uninstall.sh` + `scripts/lib/state.sh` (команда `knrc uninstall`) | [docs/modules/uninstall.md](docs/modules/uninstall.md) |
+| `scripts/harden-ssh.sh` (опциональная команда `knrc harden-ssh`, вне ALL_MODULES) | [docs/modules/harden-ssh.md](docs/modules/harden-ssh.md) |
 | `modules/fonts.sh` | [docs/modules/fonts.md](docs/modules/fonts.md) |
 | `modules/zsh-terminal-app.sh` (опциональный, вне ALL_MODULES) | [docs/modules/zsh-terminal-app.md](docs/modules/zsh-terminal-app.md) |
 

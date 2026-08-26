@@ -13,6 +13,8 @@
 #   install [аргументы]       — прогнать install.sh (все его флаги
 #                               передаются как есть)
 #   uninstall [аргументы]     — откат установки (спрашивает подтверждение)
+#   harden-ssh [аргументы]    — опционально: харденинг SSH этой машины
+#                               (спрашивает подтверждение, свой --rollback)
 #   help                      — справка
 #
 # Схема сознательно "тонкий шим + вся логика в репозитории": обновление
@@ -57,6 +59,11 @@ knrc — управление окружением .knrc (репозиторий
                                 вернуть login-shell. Спрашивает
                                 подтверждение; '--dry-run' показывает
                                 план, '--help' — все флаги.
+  knrc harden-ssh [аргументы]   опционально, только по запросу: отключить
+                                root-логин и вход по паролю по SSH после
+                                подтверждённого доступа по ключу. Своя
+                                команда '--rollback', не часть uninstall.
+                                '--help' — все флаги.
   knrc help                     эта справка
 EOF
 }
@@ -90,6 +97,17 @@ knrc::uninstall() {
   uninstall::run "$@" 2>&1
 }
 
+knrc::harden_ssh() {
+  # shellcheck disable=SC1091
+  source "$KNRC_DIR/scripts/harden-ssh.sh"
+  # Та же пара приёмов, что у doctor/uninstall выше: `set -e` убил бы
+  # сценарий на первом неудачном шаге, а нужно дойти до финальных
+  # предупреждений; склейка потоков — чтобы порядок строк плана не
+  # разъезжался при перенаправлении.
+  set +e
+  harden_ssh::run "$@" 2>&1
+}
+
 knrc::main() {
   local command="${1:-help}"
   if [ "$#" -gt 0 ]; then
@@ -99,6 +117,7 @@ knrc::main() {
   case "$command" in
     doctor)          knrc::doctor "$@" ;;
     uninstall)       knrc::uninstall "$@" ;;
+    harden-ssh)      knrc::harden_ssh "$@" ;;
     install)         exec "$KNRC_DIR/install.sh" "$@" ;;
     help|--help|-h)  knrc::usage ;;
     *)
