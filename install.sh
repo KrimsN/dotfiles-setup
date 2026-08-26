@@ -56,6 +56,17 @@ log::info() { echo "${LOG_CYAN}${LOG_TAG} ▶ ${1}${LOG_RESET}"; }
 log::warn() { echo "${LOG_YELLOW}${LOG_TAG} ⚠ ${1}${LOG_RESET}" >&2; }
 log::err()  { echo "${LOG_RED}${LOG_TAG} ✖ ${1}${LOG_RESET}" >&2; }
 
+# Единая точка выхода из интерактивных вопросов: по 'q' в меню, по
+# Ctrl+C (см. `trap ... INT` в install_sh::main) и по EOF/закрытому
+# /dev/tty на read. 130 — стандартный код завершения "прервано
+# SIGINT", используем его и для явного 'q', чтобы код возврата был
+# однозначным сигналом "пользователь отменил", а не ошибкой скрипта.
+install_sh::_abort() {
+  echo "" >&2
+  log::err "install: отменено пользователем"
+  exit 130
+}
+
 # ASCII-баннер ".KNRC" — печатается один раз в начале установки, чтобы
 # сразу было видно, какой скрипт выполняется (актуально для `curl | bash`,
 # где лог начинается посреди чужого вывода curl). Обрамление считается по
@@ -240,12 +251,17 @@ install_sh::_selected_modules() {
   log::prompt "Что установить?" >&2
   echo "" >&2
   log::prompt "  1) Всё (рекомендуется)" >&2
+  echo "" >&2
   log::prompt "  2) Выбрать вручную" >&2
+  echo "" >&2
   local choice
   read -r -p "$(log::prompt 'Выбор [1]: ')" choice < /dev/tty || choice=""
   choice="${choice:-1}"
 
-  if [ "$choice" != "2" ]; then
+  if [ "$choice" == "q" ]; then
+    install_sh::_abort
+    return 130
+  elif [ "$choice" == "1" ]; then
     echo "${KNRC_ALL_MODULES[*]}"
     return 0
   fi
