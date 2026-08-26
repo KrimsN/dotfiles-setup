@@ -16,6 +16,28 @@
 
 set -euo pipefail
 
+# root-safe обёртка над sudo: на минимальных образах (например
+# Docker-контейнеры без systemd), запущенных от root, бинарника sudo
+# часто нет — а он там и не нужен, root и так может всё. Переопределяет
+# команду `sudo`, так что весь остальной код (os::pkg_install и т.п.,
+# а также модули, которые вызывают `sudo ...` напрямую) работает без
+# изменений что от root, что от обычного пользователя.
+# Канонический вариант — здесь; install.sh держит свою копию для
+# install_sh::_bootstrap_git_curl, которая выполняется до того, как
+# репозиторий склонирован и эту функцию можно подключить через source
+# (см. комментарий в install.sh рядом с дублированием log::info/warn/err).
+sudo() {
+  if [ "$EUID" -eq 0 ]; then
+    "$@"
+    return
+  fi
+  if ! command -v sudo >/dev/null 2>&1; then
+    log::err "sudo не найден. Поставьте sudo от root (apt/dnf/yum install sudo) либо запустите install.sh от root."
+    return 1
+  fi
+  command sudo "$@"
+}
+
 os::detect() {
   if [ ! -r /etc/os-release ]; then
     log::err "os-detect: /etc/os-release не найден — неподдерживаемая система"

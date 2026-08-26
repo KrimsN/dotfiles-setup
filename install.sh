@@ -56,6 +56,23 @@ log::info() { echo "${LOG_CYAN}${LOG_TAG} ▶ ${1}${LOG_RESET}"; }
 log::warn() { echo "${LOG_YELLOW}${LOG_TAG} ⚠ ${1}${LOG_RESET}" >&2; }
 log::err()  { echo "${LOG_RED}${LOG_TAG} ✖ ${1}${LOG_RESET}" >&2; }
 
+# Собственная копия root-safe sudo (канонический вариант —
+# scripts/lib/os-detect.sh, переопределяет эту же функцию после того,
+# как репозиторий склонирован, см. install_sh::main) — нужна здесь по
+# той же причине, что и дублирование log::* выше: install_sh::_bootstrap_git_curl
+# зовёт sudo до того, как os-detect.sh можно подключить через source.
+sudo() {
+  if [ "$EUID" -eq 0 ]; then
+    "$@"
+    return
+  fi
+  if ! command -v sudo >/dev/null 2>&1; then
+    log::err "sudo не найден. Поставьте sudo от root (apt/dnf/yum install sudo) либо запустите install.sh от root."
+    return 1
+  fi
+  command sudo "$@"
+}
+
 # Единая точка выхода из интерактивных вопросов: по 'q' в меню, по
 # Ctrl+C (см. `trap ... INT` в install_sh::main) и по EOF/закрытому
 # /dev/tty на read. 130 — стандартный код завершения "прервано
@@ -254,22 +271,26 @@ install_sh::_selected_modules() {
   echo "" >&2
   log::prompt "  2) Выбрать вручную" >&2
   echo "" >&2
+  log::prompt "  q) Выйти" >&2
+  echo "" >&2
   local choice
-  read -r -p "$(log::prompt 'Выбор [1]: ')" choice < /dev/tty || choice=""
+  read -r -p "$(log::prompt 'Выбор [1]: ')" choice < /dev/tty || install_sh::_abort
   choice="${choice:-1}"
 
-  if [ "$choice" == "q" ]; then
-    install_sh::_abort
-    return 130
-  elif [ "$choice" == "1" ]; then
+  case "$choice" in
+    q|Q) install_sh::_abort ;;
+  esac
+
+  if [ "$choice" != "2" ]; then
     echo "${KNRC_ALL_MODULES[*]}"
     return 0
   fi
 
   local selected=() answer m i=1
   for m in "${KNRC_ALL_MODULES[@]}"; do
-    read -r -p "$(log::prompt "  [$i/${#KNRC_ALL_MODULES[@]}] Установить '$m'? [Y/n] ")" answer < /dev/tty || answer=""
+    read -r -p "$(log::prompt "  [$i/${#KNRC_ALL_MODULES[@]}] Установить '$m'? [Y/n/q] ")" answer < /dev/tty || install_sh::_abort
     case "$answer" in
+      q|Q) install_sh::_abort ;;
       n|N|no|No) ;;
       *) selected+=("$m") ;;
     esac
@@ -337,6 +358,7 @@ EOF
 install_sh::main() {
   install_sh::_banner
   trap install_sh::_write_log EXIT
+  trap install_sh::_abort INT
 
   local repo_dir
   repo_dir="$(install_sh::_ensure_repo)"
