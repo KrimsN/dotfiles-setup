@@ -29,6 +29,11 @@ fonts::_install_one() {
     return 0
   fi
 
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы $label в $dest"
+    return 0
+  fi
+
   local url
   url="$(curl -fsSL "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest" \
     | grep -oE '"browser_download_url":[[:space:]]*"[^"]+"' \
@@ -58,8 +63,12 @@ fonts::install() {
   fonts::_install_one "JetBrainsMono Nerd Font" "JetBrainsMono"
   fonts::_install_one "FiraCode Nerd Font" "FiraCode"
 
-  log::info "fonts: обновляю кэш шрифтов"
-  fc-cache -f "$FONTS_DIR" >/dev/null
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] обновил бы кэш шрифтов (fc-cache)"
+  else
+    log::info "fonts: обновляю кэш шрифтов"
+    fc-cache -f "$FONTS_DIR" >/dev/null
+  fi
 
   log::info "fonts: готово. Осталось выбрать 'JetBrainsMono Nerd Font' или 'FiraCode Nerd Font' в настройках шрифта твоего терминала вручную — это единственный шаг, который скрипт сделать не может."
 }

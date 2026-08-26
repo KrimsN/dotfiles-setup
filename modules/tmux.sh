@@ -54,9 +54,15 @@ tmux::install_tpm() {
   local dest="$HOME/.tmux/plugins/tpm"
   if [ -d "$dest" ]; then
     log::info "tmux: TPM уже установлен, пропускаю"
-  else
-    git clone --depth=1 https://github.com/tmux-plugins/tpm "$dest"
+    return 0
   fi
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] клонировал бы TPM в $dest"
+    return 0
+  fi
+
+  git clone --depth=1 https://github.com/tmux-plugins/tpm "$dest"
 }
 
 tmux::write_config() {
@@ -69,6 +75,11 @@ tmux::write_config() {
   os::pkg_install diffutils >/dev/null
 
   backup::create_if_diff "$src" "$dest" "tmux"
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] обновил бы $dest"
+    return 0
+  fi
 
   cp "$src" "$dest"
   log::info "tmux: ~/.tmux.conf обновлён"
@@ -86,6 +97,11 @@ tmux::create_local_file() {
     return 0
   fi
 
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] создал бы $dest"
+    return 0
+  fi
+
   cat > "$dest" <<'EOF'
 # ~/.tmux.conf.local — сюда пишите всё, что хотите сохранить между
 # запусками install.sh. Этот файл он не создаёт заново и не
@@ -95,6 +111,11 @@ EOF
 }
 
 tmux::install_plugins() {
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы плагины tmux через TPM"
+    return 0
+  fi
+
   log::info "tmux: устанавливаю плагины через TPM (headless)"
   # install_plugins читает путь к TPM из переменной окружения tmux-сервера,
   # которую регистрирует сам ~/.tmux.conf при загрузке (строка `run -b
@@ -115,6 +136,11 @@ tmux::install_autoattach_hook() {
   local snippet_src snippet_dest
   snippet_src="$(tmux::_dotfiles_dir)/config/tmux-autoattach.sh"
   snippet_dest="$DOTFILES_STATE_DIR/tmux-autoattach.sh"
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы хук авто-подключения в $snippet_dest"
+    return 0
+  fi
 
   mkdir -p "$DOTFILES_STATE_DIR"
   cp "$snippet_src" "$snippet_dest"

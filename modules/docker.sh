@@ -21,6 +21,12 @@ docker::install_engine() {
     log::info "docker: уже установлен, пропускаю"
     return 0
   fi
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы docker через get.docker.com"
+    return 0
+  fi
+
   log::info "docker: устанавливаю через официальный скрипт get.docker.com"
   local script
   script="$(mktemp)"
@@ -34,6 +40,12 @@ docker::enable_service() {
     log::warn "docker: systemctl недоступен (нет systemd — контейнер/WSL без него?), пропускаю автозапуск"
     return 0
   fi
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] включил бы и запустил сервис docker"
+    return 0
+  fi
+
   log::info "docker: включаю и запускаю сервис"
   sudo systemctl enable --now docker \
     || log::warn "docker: не удалось включить сервис через systemctl, пропускаю"
@@ -76,6 +88,11 @@ docker::configure_user_group() {
   fi
 
   if docker::_want_user_in_group; then
+    if [ "${DRY_RUN:-0}" = "1" ]; then
+      log::info "[dry-run] добавил бы $current_user в группу docker"
+      return 0
+    fi
+
     log::info "docker: добавляю $current_user в группу docker"
     # Записываем сам факт добавления: по `id -nG` потом видно только
     # "состоит в группе", а состоял ли он в ней до нас — уже нет.

@@ -42,6 +42,11 @@ nvim::install_package() {
     return 0
   fi
 
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы nvim с GitHub Releases в /usr/local/bin/nvim"
+    return 0
+  fi
+
   local arch url tmp
   arch="$(nvim::_arch)"
   url="$(curl -fsSL https://api.github.com/repos/neovim/neovim/releases/latest \
@@ -81,6 +86,11 @@ nvim::write_config() {
 
   backup::create_if_diff "$src" "$dest" "nvim"
 
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] обновил бы $dest"
+    return 0
+  fi
+
   cp "$src" "$dest"
   log::info "nvim: ~/.config/nvim/init.lua обновлён"
 }
@@ -89,6 +99,11 @@ nvim::install_plugins() {
   # nvim-treesitter компилирует парсеры через `:TSUpdate` — без cc/gcc
   # сборка падает с "No C compiler found" (поймано при тестировании).
   os::pkg_install gcc >/dev/null
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы плагины nvim через lazy.nvim"
+    return 0
+  fi
 
   log::info "nvim: устанавливаю плагины через lazy.nvim (headless)"
   nvim --headless "+Lazy! sync" +qa

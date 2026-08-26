@@ -14,6 +14,11 @@
 set -euo pipefail
 
 git_eco::install_gh_debian() {
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] настроил бы apt-репозиторий GitHub CLI и поставил бы gh"
+    return 0
+  fi
+
   sudo mkdir -p -m 755 /etc/apt/keyrings
   curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null
@@ -29,6 +34,11 @@ git_eco::install_gh_debian() {
 }
 
 git_eco::install_gh_rhel() {
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] настроил бы $PKG_MANAGER-репозиторий GitHub CLI и поставил бы gh"
+    return 0
+  fi
+
   local repo_url="https://cli.github.com/packages/rpm/gh-cli.repo"
 
   case "$PKG_MANAGER" in

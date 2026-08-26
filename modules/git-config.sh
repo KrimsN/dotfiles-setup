@@ -64,6 +64,10 @@ git_config::_dotfiles_dir() {
 }
 
 git_config::_set() {
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] git config --global $1 $2"
+    return 0
+  fi
   git config --global "$1" "$2"
 }
 
@@ -125,6 +129,11 @@ git_config::setup_excludes() {
   local snippet_src snippet_dest
   snippet_src="$(git_config::_dotfiles_dir)/config/gitignore_global"
   snippet_dest="$DOTFILES_STATE_DIR/gitignore_global"
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы глобальный gitignore в $snippet_dest"
+    return 0
+  fi
 
   mkdir -p "$DOTFILES_STATE_DIR"
   cp "$snippet_src" "$snippet_dest"

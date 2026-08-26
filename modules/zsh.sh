@@ -20,9 +20,15 @@ zsh::_clone_if_missing() {
   local repo="$1" dest="$2"
   if [ -d "$dest" ]; then
     log::info "zsh: уже установлено, пропускаю: $dest"
-  else
-    git clone --depth=1 "$repo" "$dest"
+    return 0
   fi
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] клонировал бы $repo в $dest"
+    return 0
+  fi
+
+  git clone --depth=1 "$repo" "$dest"
 }
 
 zsh::install_package() {
@@ -35,6 +41,12 @@ zsh::install_oh_my_zsh() {
     log::info "zsh: oh-my-zsh уже установлен, пропускаю"
     return 0
   fi
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] установил бы oh-my-zsh"
+    return 0
+  fi
+
   log::info "zsh: устанавливаю oh-my-zsh"
 
   # KEEP_ZSHRC=yes у установщика значит "не перезаписывай СУЩЕСТВУЮЩИЙ
@@ -90,6 +102,11 @@ zsh::write_zshrc() {
 
   backup::create_if_diff "$src" "$dest" "zsh"
 
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] обновил бы $dest"
+    return 0
+  fi
+
   cp "$src" "$dest"
   log::info "zsh: ~/.zshrc обновлён"
 }
@@ -102,6 +119,11 @@ zsh::create_local_file() {
 
   if [ -f "$dest" ]; then
     log::info "zsh: ~/.zshrc.local уже существует, не трогаю"
+    return 0
+  fi
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] создал бы $dest"
     return 0
   fi
 
@@ -152,6 +174,11 @@ zsh::configure_shell() {
   fi
 
   if zsh::_want_default_shell; then
+    if [ "${DRY_RUN:-0}" = "1" ]; then
+      log::info "[dry-run] сделал бы zsh shell'ом по умолчанию для $current_user"
+      return 0
+    fi
+
     if ! grep -qxF "$zsh_path" /etc/shells 2>/dev/null; then
       log::info "zsh: добавляю $zsh_path в /etc/shells"
       echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
