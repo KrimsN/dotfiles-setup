@@ -16,8 +16,40 @@
 
 set -euo pipefail
 
+# На RHEL-семье (замечено на CentOS Stream в WSL) `/usr/bin/docker`
+# нередко уже существует — но это не Docker Engine, а шим из пакета
+# podman-docker (symlink либо обёртка, транслирующая docker-команды в
+# podman). Голая проверка `command -v docker` принимала этот шим за
+# "уже установлен" и пропускала установку — из-за чего дальше не было
+# ни docker.service, ни группы docker (их создаёт постинсталл настоящего
+# docker-ce, а не podman-docker).
+docker::_is_podman_shim() {
+  command -v docker >/dev/null 2>&1 || return 1
+  local docker_bin
+  docker_bin="$(command -v docker)"
+  if readlink -f "$docker_bin" 2>/dev/null | grep -qi podman; then
+    return 0
+  fi
+  docker --version 2>/dev/null | grep -qi podman
+}
+
 docker::install_engine() {
-  if command -v docker >/dev/null 2>&1; then
+  if docker::_is_podman_shim; then
+    log::warn "docker: найден podman-docker (docker — это шим от podman, не настоящий Docker Engine) — удаляю его, чтобы поставить настоящий"
+    if [ "${DRY_RUN:-0}" = "1" ]; then
+      log::info "[dry-run] удалил бы пакет podman-docker и установил бы docker через get.docker.com"
+      return 0
+    fi
+    case "$PKG_MANAGER" in
+      apt) sudo apt-get remove -y podman-docker ;;
+      dnf) sudo dnf remove -y podman-docker ;;
+      yum) sudo yum remove -y podman-docker ;;
+      *)
+        log::err "docker::install_engine: PKG_MANAGER не задан — вызови os::detect первым"
+        return 1
+        ;;
+    esac
+  elif command -v docker >/dev/null 2>&1; then
     log::info "docker: уже установлен, пропускаю"
     return 0
   fi

@@ -39,3 +39,24 @@ systemd отработает штатно).
 
 Сама запись делается только в той ветке, где добавление реально
 происходит, и уважает `DRY_RUN`.
+
+## Ложное "уже установлен" из-за podman-docker (2026-08-26)
+
+Обнаружено на CentOS Stream в WSL: `/usr/bin/docker` уже существовал на
+чистой машине, но не был Docker Engine — это шим из пакета
+`podman-docker` (RHEL-семья ставит его по умолчанию на части образов;
+symlink либо обёртка, транслирующая docker-команды в podman). Голая
+проверка `command -v docker` принимала шим за "уже установлен" и
+пропускала установку целиком — из-за чего дальше не было ни
+`docker.service` (`Failed to enable unit, unit docker.service does not
+exist`), ни группы `docker` (`usermod: group 'docker' does not exist`):
+обе создаёт постинсталл настоящего `docker-ce`, которого модуль так и
+не запустил.
+
+Исправлено `docker::_is_podman_shim`: проверяет `readlink -f` на
+бинарнике `docker` (ловит symlink-вариант шима) и вывод `docker
+--version` (ловит вариант с обёрткой-скриптом, который печатает `podman
+version ...`). Если шим найден, `docker::install_engine` сначала удаляет
+пакет `podman-docker` через `PKG_MANAGER` (`apt`/`dnf`/`yum`), и только
+после этого ставит настоящий Docker через `get.docker.com` — как и на
+чистой машине без podman.
