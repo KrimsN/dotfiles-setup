@@ -23,7 +23,8 @@
 Набор скриптов для быстрой настройки unix-окружения на Ubuntu, Debian,
 Fedora и CentOS: zsh + oh-my-zsh + Powerlevel10k (+ Nerd Font-шрифты),
 tmux (+ TPM, tmux-resurrect, tmux-continuum), git-экосистема (gh),
-docker и набор CLI-утилит (полный список — в [CLAUDE.md](CLAUDE.md)).
+docker и набор CLI-утилит (полный список — в
+[docs/PROJECT.md](docs/PROJECT.md)).
 
 ## Быстрый старт
 
@@ -92,6 +93,21 @@ knrc uninstall
 `*.local`-файлы тоже остаются нетронутыми. Подробности — в
 [docs/modules/uninstall.md](docs/modules/uninstall.md).
 
+## Харденинг SSH (опционально)
+
+Отдельная команда, не часть установки и не часть отката — только по
+явному запросу, после того как вы убедились, что вход по SSH-ключу
+работает:
+
+```bash
+knrc harden-ssh
+```
+
+Отключает root-логин и вход по паролю в `sshd_config` этой машины.
+Печатает план и спрашивает подтверждение так же, как `knrc uninstall`;
+свои `--dry-run` и `--rollback`. Подробности — в
+[docs/modules/harden-ssh.md](docs/modules/harden-ssh.md).
+
 ## Статус
 
 Все модули реализованы и протестированы на Ubuntu, Debian, Fedora и
@@ -101,5 +117,6 @@ CentOS (Docker/WSL). На каждый push/PR в `master` GitHub Actions
 Stream 9 — статус см. в бейджах выше. CentOS 7 (yum-fallback) в CI не
 включён из-за протухших зеркал EOL-дистрибутива — поддерживается
 только для ручного тестирования через `scripts/test-module.sh`.
-Подробности реализации, тестирования и принятые решения — в
-[CLAUDE.md](CLAUDE.md).
+Полный список программ, история решений по составу и таблица модулей
+с покрытием тестами — в [docs/PROJECT.md](docs/PROJECT.md); детали
+реализации каждого модуля — в `docs/modules/`.
