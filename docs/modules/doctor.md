@@ -62,9 +62,13 @@ $REPO/scripts/doctor.sh    — реализация doctor
 оставлены — команда, которая отвечает «пока не реализовано», хуже, чем
 её отсутствие.
 
-Для `uninstall` уже подготовлен `rcfile::remove_block`
-(`scripts/lib/rcfile.sh`) — сейчас он используется для миграции
-переименованного маркера `python-tools-path` → `localbin-path`.
+**Проверено на практике:** `knrc uninstall` добавился ровно так, без
+единой правки в `install.sh`, лаунчере или PATH — см.
+[uninstall.md](uninstall.md). Пригодился и заранее написанный
+`rcfile::remove_block` (`scripts/lib/rcfile.sh`), появившийся под
+миграцию маркера `python-tools-path` → `localbin-path`: он же стал
+основой отката rc-блоков. Для `update` схема та же — `scripts/update.sh`
+с `update::run`.
 
 ## Что проверяется
 

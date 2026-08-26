@@ -10,6 +10,8 @@
 #
 # И функции-обёртки:
 #   os::pkg_update              — обновить индекс пакетов
+#   os::pkg_upgrade             — обновить индекс + накатить обновления
+#                                 установленных пакетов
 #   os::pkg_install <pkg...>    — установить пакеты
 
 set -euo pipefail
@@ -82,6 +84,25 @@ os::pkg_update() {
     yum) sudo yum makecache -y ;;
     *)
       log::err "os::pkg_update: PKG_MANAGER не задан — вызови os::detect первым"
+      return 1
+      ;;
+  esac
+}
+
+os::pkg_upgrade() {
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] обновил бы индекс и накатил обновления пакетов ($PKG_MANAGER)"
+    return 0
+  fi
+  case "$PKG_MANAGER" in
+    apt)
+      sudo apt-get update -y
+      sudo apt-get upgrade -y
+      ;;
+    dnf) sudo dnf upgrade -y ;;
+    yum) sudo yum update -y ;;
+    *)
+      log::err "os::pkg_upgrade: PKG_MANAGER не задан — вызови os::detect первым"
       return 1
       ;;
   esac

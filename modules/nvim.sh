@@ -79,11 +79,7 @@ nvim::write_config() {
 
   mkdir -p "$dest_dir"
 
-  if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
-    local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
-    log::warn "nvim: существующий ~/.config/nvim/init.lua отличается — делаю бэкап в $backup"
-    cp "$dest" "$backup"
-  fi
+  backup::create_if_diff "$src" "$dest" "nvim"
 
   cp "$src" "$dest"
   log::info "nvim: ~/.config/nvim/init.lua обновлён"

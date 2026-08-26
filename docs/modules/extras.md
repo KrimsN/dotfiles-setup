@@ -36,3 +36,16 @@ EPEL для tldr).
 Ubuntu 24.04, Debian 12, Fedora, CentOS Stream 9 (в связке
 `base,cli-tools,extras,python-tools`, два прогона на идемпотентность) —
 везде чисто. На CentOS 9 отдельно подтверждена ветка EPEL для tldr.
+
+## `EXTRAS_PACKAGES` (2026-08-25)
+
+Список пакетов модуля переехал из тела `extras::install` (два подряд
+`pkg::install`) в константу `EXTRAS_PACKAGES` — так же, как это уже
+было устроено в `cli-tools.sh` (`CLI_PACKAGES`) и `diagnostics.sh`
+(`DIAGNOSTICS_PACKAGES`).
+
+Причина — второй потребитель списка: `knrc uninstall`
+([uninstall.md](uninstall.md)) подключает модуль ради этой константы,
+чтобы знать, что именно он принёс на машину. Своя копия списка внутри
+`uninstall.sh` рано или поздно разъехалась бы с этой, а цена расхождения
+— пакет, который не попал ни в удаление, ни даже в отчёт «осталось».

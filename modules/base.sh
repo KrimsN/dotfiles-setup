@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Установка базового набора программ:
+# Обновление репозиториев/пакетов системы (apt update + upgrade и
+# аналоги для dnf/yum) и установка базового набора программ:
 # git, curl, wget, vim, htop, btop, tree, unzip, zip, diffutils.
 # (neovim сюда не входит — свежий бинарник ставится отдельным модулем
 # modules/nvim.sh с GitHub Releases, пакетную версию из репозиториев
@@ -14,6 +15,8 @@
 set -euo pipefail
 
 base::install() {
+  log::info "base: обновляю репозитории и пакеты системы"
+  os::pkg_upgrade
   epel::ensure
   log::info "base: устанавливаю базовый набор пакетов"
   os::pkg_install git curl wget vim htop btop tree unzip zip diffutils

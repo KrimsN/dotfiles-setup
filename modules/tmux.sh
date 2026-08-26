@@ -68,11 +68,7 @@ tmux::write_config() {
   # заранее (идемпотентно).
   os::pkg_install diffutils >/dev/null
 
-  if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
-    local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
-    log::warn "tmux: существующий ~/.tmux.conf отличается — делаю бэкап в $backup"
-    cp "$dest" "$backup"
-  fi
+  backup::create_if_diff "$src" "$dest" "tmux"
 
   cp "$src" "$dest"
   log::info "tmux: ~/.tmux.conf обновлён"

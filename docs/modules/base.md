@@ -1,7 +1,11 @@
 # modules/base.sh
 
-Базовый набор: git, curl, wget, vim, htop, btop, tree, unzip, zip,
-diffutils — одним вызовом `os::pkg_install` после `epel::ensure` (btop на
+Перед установкой пакетов вызывает `os::pkg_upgrade` — обновляет индекс
+репозиториев и накатывает обновления уже установленных пакетов
+(`apt-get update && apt-get upgrade` на Debian/Ubuntu, `dnf upgrade` /
+`yum update` на RHEL-семье). Затем базовый набор: git, curl, wget, vim,
+htop, btop, tree, unzip, zip, diffutils — одним вызовом `os::pkg_install`
+после `epel::ensure` (btop на
 CentOS живёт только в EPEL, остальное — в базовых репах везде). `neovim`
 в этот список не входит (был здесь изначально) — свежий бинарник ставит
 отдельный `modules/nvim.sh` с GitHub Releases (см. [nvim.md](nvim.md)),

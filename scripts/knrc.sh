@@ -12,13 +12,14 @@
 #   doctor [--modules=LIST]   — диагностика окружения (ничего не меняет)
 #   install [аргументы]       — прогнать install.sh (все его флаги
 #                               передаются как есть)
+#   uninstall [аргументы]     — откат установки (спрашивает подтверждение)
 #   help                      — справка
 #
 # Схема сознательно "тонкий шим + вся логика в репозитории": обновление
 # CLI сводится к `git pull` в каталоге репозитория, копировать бинарник
-# заново не нужно. Будущие `knrc update` и `knrc uninstall` добавляются
-# сюда же — одной веткой case и одним файлом scripts/<команда>.sh, см.
-# docs/modules/doctor.md.
+# заново не нужно. Будущий `knrc update` добавляется сюда же — одной
+# веткой case и одним файлом scripts/update.sh с публичной функцией
+# update::run, по образцу doctor и uninstall, см. docs/modules/doctor.md.
 
 set -euo pipefail
 
@@ -32,6 +33,14 @@ source "$KNRC_DIR/scripts/lib/log.sh"
 source "$KNRC_DIR/scripts/lib/os-detect.sh"
 # shellcheck disable=SC1091
 source "$KNRC_DIR/scripts/lib/modules.sh"
+# rcfile::remove_block и state::read нужны команде uninstall; подключаем
+# здесь, рядом с остальными библиотеками, а не внутри ветки case —
+# сорсить библиотеки из-под команды значит иметь два разных набора
+# доступных функций в зависимости от аргумента.
+# shellcheck disable=SC1091
+source "$KNRC_DIR/scripts/lib/rcfile.sh"
+# shellcheck disable=SC1091
+source "$KNRC_DIR/scripts/lib/state.sh"
 
 knrc::usage() {
   cat <<EOF
@@ -43,6 +52,11 @@ knrc — управление окружением .knrc (репозиторий
   knrc install [аргументы]      запустить install.sh (флаги --yes,
                                 --dry-run и переменные окружения — как у
                                 install.sh)
+  knrc uninstall [аргументы]    откат установки: вернуть конфиги из
+                                бэкапов, убрать установленное нами,
+                                вернуть login-shell. Спрашивает
+                                подтверждение; '--dry-run' показывает
+                                план, '--help' — все флаги.
   knrc help                     эта справка
 EOF
 }
@@ -65,6 +79,17 @@ knrc::doctor() {
   doctor::run "$@" 2>&1
 }
 
+knrc::uninstall() {
+  # shellcheck disable=SC1091
+  source "$KNRC_DIR/scripts/uninstall.sh"
+  # Ровно та же пара приёмов, что и у doctor выше, по тем же причинам:
+  # `set -e` убил бы откат на первом же шаге, который не удался (а
+  # оставшиеся шаги выполнить надо), а разделённые stdout/stderr
+  # перемешали бы строки плана при перенаправлении в файл.
+  set +e
+  uninstall::run "$@" 2>&1
+}
+
 knrc::main() {
   local command="${1:-help}"
   if [ "$#" -gt 0 ]; then
@@ -73,6 +98,7 @@ knrc::main() {
 
   case "$command" in
     doctor)          knrc::doctor "$@" ;;
+    uninstall)       knrc::uninstall "$@" ;;
     install)         exec "$KNRC_DIR/install.sh" "$@" ;;
     help|--help|-h)  knrc::usage ;;
     *)

@@ -52,7 +52,22 @@ repeatable command instead of an ad hoc container each time.
    cp -r /repo /tmp/knrc && cd /tmp/knrc
    DOTFILES_MODULES="base <module-name>" NONINTERACTIVE=1 ./install.sh
    ```
-6. Once the module passes, add a short **Тестирование** note to its
+6. If the change touches what `knrc uninstall` has to undo — a new
+   module, a new file written to disk, a new backup, a new system-level
+   change — also run the round-trip:
+   ```bash
+   scripts/test-uninstall.sh <distro> [<module>[,<module>...]]
+   ```
+   Same disposable-container idea, different question: clean container
+   → snapshot → install → `uninstall --dry-run` (must change **nothing**
+   — that assertion fails the script) → `uninstall --force` → diff
+   against the initial snapshot. Some difference in the final diff is
+   expected and documented in
+   [docs/modules/uninstall.md](../../../docs/modules/uninstall.md)
+   (packages are deliberately left installed, `*.local` files belong to
+   the user); reading that diff is the actual test. A module that
+   installs something but never comes back off is not done.
+7. Once the module passes, add a short **Тестирование** note to its
    file in `docs/modules/<module>.md` naming the distro(s) covered —
    that file is the persistent record scripts/test-module.sh output
    (which disappears when the container exits) turns into.

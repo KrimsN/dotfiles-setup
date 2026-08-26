@@ -17,9 +17,17 @@
 
 set -euo pipefail
 
+# Список объявлен константой (как CLI_PACKAGES в cli-tools.sh и
+# DIAGNOSTICS_PACKAGES в diagnostics.sh) — его читает не только
+# установка, но и `knrc uninstall`, чтобы знать, что именно этот модуль
+# принёс на машину.
+EXTRAS_PACKAGES=(tldr fastfetch)
+
 extras::install() {
-  pkg::install tldr || true
-  pkg::install fastfetch || true
+  local pkg
+  for pkg in "${EXTRAS_PACKAGES[@]}"; do
+    pkg::install "$pkg" || true
+  done
   log::info "extras: готово."
 }
 

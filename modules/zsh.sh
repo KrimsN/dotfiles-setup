@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Установка и настройка zsh + oh-my-zsh + Powerlevel10k.
 # Не запускать напрямую — подключать через `source` после
-# scripts/lib/os-detect.sh (нужны PKG_MANAGER и os::pkg_install).
+# scripts/lib/os-detect.sh и scripts/lib/state.sh (нужны PKG_MANAGER,
+# os::pkg_install и state::record).
 #
 # Публичная точка входа: zsh::install
 #
@@ -35,12 +36,29 @@ zsh::install_oh_my_zsh() {
     return 0
   fi
   log::info "zsh: устанавливаю oh-my-zsh"
+
+  # KEEP_ZSHRC=yes у установщика значит "не перезаписывай СУЩЕСТВУЮЩИЙ
+  # ~/.zshrc", а не "не создавай": если файла не было, он всё равно
+  # кладёт свой шаблон. Дальше zsh::write_zshrc видит "файл есть и
+  # отличается" и делает бэкап ЧУЖОГО шаблона, приняв его за конфиг
+  # пользователя. На свежей машине это давало и мусорный
+  # ~/.zshrc.bak.<время> после каждой установки, и — что хуже —
+  # `knrc uninstall` честно восстанавливал этот шаблон, оставляя
+  # ~/.zshrc, который сорсит уже удалённый ~/.oh-my-zsh (поймано при
+  # тестировании отката). Поэтому запоминаем, был ли файл до нас, и
+  # шаблон установщика убираем, если своего .zshrc не было.
+  local had_zshrc=0
+  [ -f "$HOME/.zshrc" ] && had_zshrc=1
+
   # RUNZSH=no  — не переключаться в zsh сразу после установки
   # CHSH=no    — смену login-shell делаем сами в zsh::configure_shell
-  # KEEP_ZSHRC=yes — не даём инсталлятору генерировать свой .zshrc,
-  #                  дальше пишем свой (zsh::write_zshrc)
   RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+  if [ "$had_zshrc" -eq 0 ] && [ -f "$HOME/.zshrc" ]; then
+    log::info "zsh: убираю шаблонный ~/.zshrc установщика oh-my-zsh (своего до установки не было)"
+    rm -f "$HOME/.zshrc"
+  fi
 }
 
 zsh::install_powerlevel10k() {
@@ -70,11 +88,7 @@ zsh::write_zshrc() {
   # если пакет уже есть).
   os::pkg_install diffutils >/dev/null
 
-  if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
-    local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
-    log::warn "zsh: существующий ~/.zshrc отличается — делаю бэкап в $backup"
-    cp "$dest" "$backup"
-  fi
+  backup::create_if_diff "$src" "$dest" "zsh"
 
   cp "$src" "$dest"
   log::info "zsh: ~/.zshrc обновлён"
@@ -143,6 +157,10 @@ zsh::configure_shell() {
       echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
     fi
     log::info "zsh: делаю zsh shell'ом по умолчанию для $current_user"
+    # Прежний shell записываем ДО смены и только в этой ветке: по
+    # passwd потом будет видно лишь "сейчас zsh", а вернуть его обратно
+    # (`knrc uninstall`) без записи не получится — см. scripts/lib/state.sh.
+    state::record "login-shell.prev" "$current_shell"
     sudo chsh -s "$zsh_path" "$current_user"
   else
     log::info "zsh: оставляю текущий login-shell без изменений (zsh доступен как альтернативный: $zsh_path)"

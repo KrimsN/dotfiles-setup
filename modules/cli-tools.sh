@@ -58,11 +58,7 @@ cli::write_bat_config() {
 
   mkdir -p "$dest_dir"
 
-  if [ -f "$dest" ] && ! cmp -s "$src" "$dest"; then
-    local backup="${dest}.bak.$(date +%Y%m%d%H%M%S)"
-    log::warn "cli-tools: существующий $dest отличается — делаю бэкап в $backup"
-    cp "$dest" "$backup"
-  fi
+  backup::create_if_diff "$src" "$dest" "cli-tools"
 
   cp "$src" "$dest"
   log::info "cli-tools: $dest обновлён"

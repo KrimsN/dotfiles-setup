@@ -342,11 +342,15 @@ install_sh::main() {
   # shellcheck disable=SC1091
   source "$repo_dir/scripts/lib/rcfile.sh"
   # shellcheck disable=SC1091
+  source "$repo_dir/scripts/lib/backup.sh"
+  # shellcheck disable=SC1091
   source "$repo_dir/scripts/lib/pkg-registry.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/scripts/lib/localbin.sh"
   # shellcheck disable=SC1091
   source "$repo_dir/scripts/lib/modules.sh"
+  # shellcheck disable=SC1091
+  source "$repo_dir/scripts/lib/state.sh"
 
   # shellcheck disable=SC1091
   source "$repo_dir/modules/base.sh"

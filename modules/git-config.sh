@@ -23,12 +23,56 @@ set -euo pipefail
 
 DOTFILES_STATE_DIR="${DOTFILES_STATE_DIR:-$HOME/.config/knrc}"
 
+# Ключи ~/.gitconfig, которыми управляет модуль, объявлены таблицами, а
+# не строчками внутри функций, потому что у них появился второй
+# потребитель: `knrc uninstall` снимает ровно те ключи, которые
+# выставила установка, и только если значение совпадает с нашим
+# (scripts/uninstall.sh подключает этот файл ради этих массивов).
+# Разъезд двух списков означал бы, что часть настроек остаётся в
+# ~/.gitconfig после удаления — поэтому список один.
+#
+# Формат элемента — "<ключ>=<значение>"; значение может содержать
+# пробелы ("delta --color-only"), поэтому режется по ПЕРВОМУ '='.
+# shellcheck disable=SC2034 # читается и scripts/uninstall.sh
+GIT_CONFIG_DEFAULTS=(
+  "init.defaultBranch=master"
+  "pull.rebase=true"
+  "push.autoSetupRemote=true"
+  "rerere.enabled=true"
+  "diff.algorithm=histogram"
+)
+
+# zdiff3 показывает в конфликте общего предка — с delta это заметно
+# полезнее дефолтного merge-стиля, поэтому ключ живёт здесь, а не в
+# общих дефолтах: без delta он не выставляется.
+# shellcheck disable=SC2034 # читается и scripts/uninstall.sh
+GIT_CONFIG_PAGER=(
+  "core.pager=delta"
+  "interactive.diffFilter=delta --color-only"
+  "delta.navigate=true"
+  "delta.line-numbers=true"
+  "merge.conflictStyle=zdiff3"
+)
+
+# shellcheck disable=SC2034 # читается и scripts/uninstall.sh
+GIT_CONFIG_EDITOR=(
+  "core.editor=nvim"
+)
+
 git_config::_dotfiles_dir() {
   echo "${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 }
 
 git_config::_set() {
   git config --global "$1" "$2"
+}
+
+# Выставить пачку ключей из таблицы вида "<ключ>=<значение>".
+git_config::_set_all() {
+  local pair
+  for pair in "$@"; do
+    git_config::_set "${pair%%=*}" "${pair#*=}"
+  done
 }
 
 # Значение уже выставлено в ~/.gitconfig (или в любом другом файле,
@@ -44,13 +88,7 @@ git_config::setup_pager() {
   fi
 
   log::info "git-config: настраиваю delta как pager"
-  git_config::_set core.pager delta
-  git_config::_set interactive.diffFilter "delta --color-only"
-  git_config::_set delta.navigate true
-  git_config::_set delta.line-numbers true
-  # zdiff3 показывает в конфликте общего предка — с delta это заметно
-  # полезнее дефолтного merge-стиля.
-  git_config::_set merge.conflictStyle zdiff3
+  git_config::_set_all "${GIT_CONFIG_PAGER[@]}"
 }
 
 git_config::setup_editor() {
@@ -60,35 +98,38 @@ git_config::setup_editor() {
   fi
 
   log::info "git-config: core.editor = nvim"
-  git_config::_set core.editor nvim
+  git_config::_set_all "${GIT_CONFIG_EDITOR[@]}"
 }
 
 git_config::setup_defaults() {
   log::info "git-config: выставляю общие дефолты git"
-  git_config::_set init.defaultBranch master
-  git_config::_set pull.rebase true
-  git_config::_set push.autoSetupRemote true
-  git_config::_set rerere.enabled true
-  git_config::_set diff.algorithm histogram
+  git_config::_set_all "${GIT_CONFIG_DEFAULTS[@]}"
+}
+
+# Путь к глобальному gitignore в том виде, в каком он попадает в
+# ~/.gitconfig: через `~`, а не абсолютный — git сам раскрывает `~/` в
+# значении core.excludesFile, а такой конфиг переносим между машинами с
+# разными $HOME. Вынесено в функцию, потому что то же значение нужно
+# `knrc uninstall`: снимать core.excludesFile можно только если он всё
+# ещё указывает на наш файл, а не на пользовательский.
+git_config::excludes_value() {
+  local dest="$DOTFILES_STATE_DIR/gitignore_global"
+  # shellcheck disable=SC2088 # тильда ниже и должна остаться нераскрытой: раскрывает её сам git
+  case "$dest" in
+    "$HOME"/*) echo "~/${dest#"$HOME"/}" ;;
+    *)         echo "$dest" ;;
+  esac
 }
 
 git_config::setup_excludes() {
-  local snippet_src snippet_dest config_value
+  local snippet_src snippet_dest
   snippet_src="$(git_config::_dotfiles_dir)/config/gitignore_global"
   snippet_dest="$DOTFILES_STATE_DIR/gitignore_global"
 
   mkdir -p "$DOTFILES_STATE_DIR"
   cp "$snippet_src" "$snippet_dest"
 
-  # В ~/.gitconfig пишем путь через `~`, а не абсолютный: git сам
-  # раскрывает `~/` в значении core.excludesFile, а такой конфиг
-  # переносим между машинами с разными $HOME.
-  case "$snippet_dest" in
-    "$HOME"/*) config_value="~/${snippet_dest#"$HOME"/}" ;;
-    *)         config_value="$snippet_dest" ;;
-  esac
-
-  git_config::_set core.excludesFile "$config_value"
+  git_config::_set core.excludesFile "$(git_config::excludes_value)"
   log::info "git-config: глобальный gitignore установлен ($snippet_dest)"
 }
 

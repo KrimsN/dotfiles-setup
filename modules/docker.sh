@@ -3,7 +3,8 @@
 # современный docker, отдельно не ставится).
 # Не запускать напрямую — подключать через `source` после
 # scripts/lib/os-detect.sh (нужен OS_ID для официального скрипта,
-# хотя он и сам умеет определять дистрибутив).
+# хотя он и сам умеет определять дистрибутив) и scripts/lib/state.sh
+# (нужен state::record).
 #
 # Публичная точка входа: docker::install
 #
@@ -76,6 +77,11 @@ docker::configure_user_group() {
 
   if docker::_want_user_in_group; then
     log::info "docker: добавляю $current_user в группу docker"
+    # Записываем сам факт добавления: по `id -nG` потом видно только
+    # "состоит в группе", а состоял ли он в ней до нас — уже нет.
+    # `knrc uninstall` выводит из группы ТОЛЬКО по этой записи, см.
+    # scripts/lib/state.sh.
+    state::record "docker-group.added" "$current_user"
     sudo usermod -aG docker "$current_user"
     log::info "docker: изменения группы применятся после перелогина"
   else
