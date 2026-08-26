@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # .knrc: личные алиасы.
 # Устанавливается модулем modules/aliases.sh в
 # ~/.config/knrc/aliases.sh — не редактировать исходник на
@@ -24,12 +25,22 @@ fi
 
 # cs <dir> — cd + подробный листинг одной командой. Без аргумента — в $HOME.
 cs() {
-  cd "${1:-$HOME}" && { command -v eza >/dev/null 2>&1 && eza -lah --icons || ls -lah; }
+  cd "${1:-$HOME}" || return
+  if command -v eza >/dev/null 2>&1; then
+    eza -lah --icons
+  else
+    ls -lah
+  fi
 }
 
 # ca <dir> — cd + листинг со скрытыми файлами. Без аргумента — в $HOME.
 ca() {
-  cd "${1:-$HOME}" && { command -v eza >/dev/null 2>&1 && eza -a --icons || ls -a; }
+  cd "${1:-$HOME}" || return
+  if command -v eza >/dev/null 2>&1; then
+    eza -a --icons
+  else
+    ls -a
+  fi
 }
 
 alias cls='clear'
@@ -44,4 +55,5 @@ alias uva='uv add'
 # Локальные алиасы пользователя: этот файл перезаписывается install.sh при
 # каждом запуске, поэтому здесь нет места для собственных настроек — они
 # подключаются отдельным файлом, который install.sh не трогает.
+# shellcheck disable=SC1090
 [[ ! -f ~/.config/knrc/aliases.local.sh ]] || source ~/.config/knrc/aliases.local.sh

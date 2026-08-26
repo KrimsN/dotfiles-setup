@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # .knrc: авто-подключение tmux к существующей сессии.
 # Устанавливается модулем modules/tmux.sh в
 # ~/.config/knrc/tmux-autoattach.sh — не редактировать
