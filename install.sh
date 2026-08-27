@@ -458,11 +458,32 @@ install_sh::main() {
 
   if [ -z "$modules" ]; then
     log::info "Готово! Команда knrc установлена, модули не ставились."
-    log::info "Перелогинься (или выполни 'source ~/.bashrc'), чтобы 'knrc' нашёлся в PATH."
     log::info "Доступные команды:"
     echo ""
     bash "$repo_dir/scripts/knrc.sh" help
-    return 0
+    echo ""
+
+    if [ ! -r /dev/tty ]; then
+      log::info "Перелогинься (или выполни 'source ~/.bashrc'), чтобы 'knrc' нашёлся в PATH."
+      return 0
+    fi
+
+    local reopen
+    read -r -p "$(log::prompt 'Открыть новый shell, чтобы knrc сразу заработал в PATH? [Y/n] ')" reopen < /dev/tty || true
+    case "$reopen" in
+      n|N|no|No)
+        log::info "Ок. Выполни 'source ~/.bashrc' или перелогинься, чтобы 'knrc' нашёлся в PATH."
+        return 0
+        ;;
+    esac
+
+    # exec заменяет процесс install.sh, поэтому обычный EXIT-трап
+    # (install_sh::_write_log) не сработает — пишем строку лога вручную
+    # перед заменой. Новый shell читает ~/.bashrc с уже обновлённым PATH.
+    true
+    install_sh::_write_log
+    trap - EXIT
+    exec "${SHELL:-bash}" -l < /dev/tty
   fi
 
   log::info "Готово! Перелогинься (или открой новый терминал), чтобы изменения shell/группы docker применились."
