@@ -64,10 +64,30 @@ cli::write_bat_config() {
   log::info "cli-tools: $dest обновлён"
 }
 
+cli::write_direnvrc() {
+  local src dest dest_dir
+  src="$(cli::_dotfiles_dir)/config/direnvrc"
+  dest_dir="$HOME/.config/direnv"
+  dest="$dest_dir/direnvrc"
+
+  mkdir -p "$dest_dir"
+
+  backup::create_if_diff "$src" "$dest" "cli-tools"
+
+  if [ "${DRY_RUN:-0}" = "1" ]; then
+    log::info "[dry-run] обновил бы $dest"
+    return 0
+  fi
+
+  cp "$src" "$dest"
+  log::info "cli-tools: $dest обновлён"
+}
+
 cli::install() {
   cli::install_packages
   cli::ensure_symlinks
   cli::write_bat_config
+  cli::write_direnvrc
   log::info "cli-tools: готово."
 }
 

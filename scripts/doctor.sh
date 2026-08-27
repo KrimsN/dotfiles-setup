@@ -414,6 +414,7 @@ doctor::check_cli_tools() {
   doctor::_bin "curlie" curlie
   doctor::_bin "direnv" direnv
   doctor::_file "конфиг bat" "$HOME/.config/bat/config"
+  doctor::_file "direnvrc (layout_uv)" "$HOME/.config/direnv/direnvrc"
 }
 
 doctor::check_git_ecosystem() {

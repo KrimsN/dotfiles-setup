@@ -539,6 +539,9 @@ uninstall::plan_cli_tools() {
 
   uninstall::_plan_config "$HOME/.config/bat/config" "$UNINSTALL_DIR/config/bat.conf" ".knrc"
   uninstall::_add_rmdir_empty "$HOME/.config/bat"
+
+  uninstall::_plan_config "$HOME/.config/direnv/direnvrc" "$UNINSTALL_DIR/config/direnvrc" ".knrc"
+  uninstall::_add_rmdir_empty "$HOME/.config/direnv"
 }
 
 uninstall::plan_git_ecosystem() {

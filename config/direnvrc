@@ -1,0 +1,19 @@
+# Managed by .knrc.
+# Копируется в ~/.config/direnv/direnvrc модулем modules/cli-tools.sh.
+# Если уже существует и отличается — скрипт делает бэкап перед
+# перезаписью (см. cli::write_direnvrc), а не молча затирает.
+#
+# layout_uv — использование в .envrc проекта: одна строка `layout uv`
+# вместо ручного `source .venv/bin/activate` с проверками. Создаёт venv
+# через уже установленный uv, если его ещё нет, и добавляет его bin/ в
+# PATH на время нахождения в каталоге (симметрично встроенным
+# `layout python`/`layout ruby` из stdlib direnv).
+layout_uv() {
+  if [[ ! -d ".venv" ]]; then
+    uv venv
+  fi
+
+  VIRTUAL_ENV="$(pwd)/.venv"
+  PATH_add "$VIRTUAL_ENV/bin"
+  export VIRTUAL_ENV
+}
