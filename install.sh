@@ -271,6 +271,8 @@ install_sh::_selected_modules() {
   echo "" >&2
   log::prompt "  2) Выбрать вручную" >&2
   echo "" >&2
+  log::prompt "  3) Только команду knrc, без модулей" >&2
+  echo "" >&2
   log::prompt "  q) Выйти" >&2
   echo "" >&2
   local choice
@@ -280,6 +282,11 @@ install_sh::_selected_modules() {
   case "$choice" in
     q|Q) install_sh::_abort ;;
   esac
+
+  if [ "$choice" = "3" ]; then
+    echo ""
+    return 0
+  fi
 
   if [ "$choice" != "2" ]; then
     echo "${KNRC_ALL_MODULES[*]}"
@@ -430,7 +437,11 @@ install_sh::main() {
   if [ "${DRY_RUN:-0}" = "1" ]; then
     log::warn "install: РЕЖИМ DRY-RUN — изменений на диске/в системе не будет"
   fi
-  log::info "install: устанавливаю: $modules"
+  if [ -z "$modules" ]; then
+    log::info "install: модули не выбраны, ставлю только команду knrc"
+  else
+    log::info "install: устанавливаю: $modules"
+  fi
 
   local m
   for m in $modules; do
@@ -442,6 +453,14 @@ install_sh::main() {
   echo ""
   if [ "${DRY_RUN:-0}" = "1" ]; then
     log::info "Dry-run завершён, изменений не было. Для реальной установки запусти без --dry-run."
+    return 0
+  fi
+
+  if [ -z "$modules" ]; then
+    log::info "Готово! Команда knrc установлена, модули не ставились."
+    log::info "Доступные команды:"
+    echo ""
+    bash "$repo_dir/scripts/knrc.sh" help
     return 0
   fi
 
