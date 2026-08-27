@@ -72,6 +72,19 @@ knrc doctor
 проверок — `knrc doctor --modules=zsh,tmux`. Подробности — в
 [docs/modules/doctor.md](docs/modules/doctor.md).
 
+## Обновление
+
+Подтянуть последнюю версию `.knrc` и переустановить новые модули:
+
+```bash
+knrc update
+```
+
+Делает `git pull --ff-only` в локальном клоне и перезапускает
+`install.sh`. Посмотреть, что подтянется, ничего не меняя: `knrc update
+--dry-run`. Отказывается обновлять, если в клоне есть незакоммиченные
+правки. Подробности — в [docs/modules/update.md](docs/modules/update.md).
+
 ## Откат
 
 Вернуть машину к состоянию до установки:

@@ -120,6 +120,9 @@ CLI-инструменты) и подключает себя сам — отде
 - `knrc doctor [--modules=LIST]` — диагностика, см.
   [docs/modules/doctor.md](modules/doctor.md).
 - `knrc install [флаги]` — прогнать `install.sh`.
+- `knrc update [--dry-run]` — обновить локальный клон (`git pull
+  --ff-only`) и перезапустить `install.sh`, см.
+  [docs/modules/update.md](modules/update.md).
 - `knrc uninstall [--dry-run|--force|--modules=LIST]` — откат
   установки, см. [docs/modules/uninstall.md](modules/uninstall.md).
 - `knrc harden-ssh [--dry-run|--force|--rollback]` — опционально, только
@@ -138,8 +141,8 @@ python-tools, git-config, ssh-config и diagnostics; плюс опциональ
 `zsh-terminal-app` вне `KNRC_ALL_MODULES`), есть единый лаунчер
 `install.sh`, работающий как через `curl | bash` на чистой машине (без
 git/curl), так и из склонированного репозитория, и команда `knrc` для
-операций над уже настроенной машиной (`knrc doctor`, `knrc uninstall`,
-`knrc harden-ssh`).
+операций над уже настроенной машиной (`knrc doctor`, `knrc update`,
+`knrc uninstall`, `knrc harden-ssh`).
 
 ### Реализованные модули
 
@@ -171,6 +174,7 @@ git/curl), так и из склонированного репозитория,
 | `modules/extras.sh` | [docs/modules/extras.md](modules/extras.md) |
 | `install.sh` | [docs/modules/install.md](modules/install.md) |
 | `scripts/knrc.sh` + `scripts/doctor.sh` (команда `knrc doctor`) | [docs/modules/doctor.md](modules/doctor.md) |
+| `scripts/update.sh` (команда `knrc update`) | [docs/modules/update.md](modules/update.md) |
 | `scripts/uninstall.sh` + `scripts/lib/state.sh` (команда `knrc uninstall`) | [docs/modules/uninstall.md](modules/uninstall.md) |
 | `scripts/harden-ssh.sh` (опциональная команда `knrc harden-ssh`, вне `ALL_MODULES`) | [docs/modules/harden-ssh.md](modules/harden-ssh.md) |
 | `modules/fonts.sh` | [docs/modules/fonts.md](modules/fonts.md) |
