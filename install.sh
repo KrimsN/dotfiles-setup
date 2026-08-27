@@ -458,6 +458,7 @@ install_sh::main() {
 
   if [ -z "$modules" ]; then
     log::info "Готово! Команда knrc установлена, модули не ставились."
+    log::info "Перелогинься (или выполни 'source ~/.bashrc'), чтобы 'knrc' нашёлся в PATH."
     log::info "Доступные команды:"
     echo ""
     bash "$repo_dir/scripts/knrc.sh" help
