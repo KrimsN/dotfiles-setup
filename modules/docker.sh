@@ -13,6 +13,11 @@
 # "Механизм конфигурации"): интерактивный вопрос через /dev/tty,
 # env-override DOCKER_ADD_USER_TO_GROUP=yes|no, безопасный дефолт "no"
 # без интерактива (группа docker по сути эквивалентна root).
+#
+# Под WSL тем же механизмом (интерактивный вопрос / env-override
+# DOCKER_WSL_MODE=desktop|engine / дефолт "engine" без интерактива)
+# выбирается между инструкцией по Docker Desktop и обычной установкой
+# Docker Engine внутри дистрибутива — см. docker::_ask_wsl_mode.
 
 set -euo pipefail
 
@@ -33,8 +38,73 @@ docker::_is_podman_shim() {
   docker --version 2>/dev/null | grep -qi podman
 }
 
+# get.docker.com сам детектит WSL и в этом случае просто предупреждает
+# и ждёт 20 секунд перед тем, как продолжить обычную установку Docker
+# Engine — из-за чего лог выглядит как будто скрипт завис. Свой выбор
+# делаем до запуска официального скрипта: даём осознанно выбрать между
+# Docker Desktop (ставится отдельно на Windows-хосте, внутри WSL только
+# инструкция) и обычным Docker Engine внутри дистрибутива — тем же
+# способом, что и раньше, но без сюрприза с паузой.
+#
+# Возвращает выбор через глобальную переменную docker_wsl_mode
+# (desktop|engine) — не через stdout, чтобы не мешать
+# command-substitution с выводом log::* (он тоже идёт в stdout).
+docker::_ask_wsl_mode() {
+  if [ -n "${DOCKER_WSL_MODE:-}" ]; then
+    case "$DOCKER_WSL_MODE" in
+      desktop) docker_wsl_mode="desktop"; return 0 ;;
+      engine) docker_wsl_mode="engine"; return 0 ;;
+      *)
+        log::warn "docker: DOCKER_WSL_MODE='$DOCKER_WSL_MODE' не распознан (ожидается desktop|engine), игнорирую"
+        ;;
+    esac
+  fi
+
+  if [ "${NONINTERACTIVE:-0}" = "1" ] || [ ! -r /dev/tty ]; then
+    # Безопасный дефолт без интерактива: ставим Docker Engine внутри
+    # WSL — это и есть прежнее поведение скрипта до появления выбора.
+    docker_wsl_mode="engine"
+    return 0
+  fi
+
+  log::warn "docker: обнаружен WSL — Docker Desktop для Windows и Docker Engine внутри дистрибутива это два разных, взаимоисключающих способа получить docker в WSL"
+  local answer
+  read -r -p "$(log::prompt "docker: что ставим — Docker Desktop (инструкция, ставится на Windows) или Docker Engine (внутри WSL, как обычный Linux)? [engine/desktop, по умолчанию engine] ")" answer < /dev/tty || answer=""
+  case "$answer" in
+    desktop|Desktop|d|D) docker_wsl_mode="desktop" ;;
+    *) docker_wsl_mode="engine" ;;
+  esac
+}
+
+docker::_print_wsl_desktop_instructions() {
+  log::info "docker: выбран Docker Desktop — сам он ставится на Windows, а не в WSL, поэтому этот шаг только печатает инструкцию:"
+  log::info "  1. Скачайте и установите Docker Desktop на Windows: https://www.docker.com/products/docker-desktop/"
+  log::info "  2. После установки откройте Docker Desktop → Settings → Resources → WSL Integration"
+  log::info "  3. Включите интеграцию для этого дистрибутива (переключатель с его именем в списке)"
+  log::info "  4. Перезапустите WSL, чтобы интеграция подхватилась: из Windows — 'wsl --shutdown', затем откройте терминал заново"
+  log::info "  5. Проверьте внутри WSL: 'docker info' — команда должна отвечать без sudo и без локального docker.service"
+}
+
 docker::install_engine() {
+  local is_shim=0
   if docker::_is_podman_shim; then
+    is_shim=1
+  elif command -v docker >/dev/null 2>&1; then
+    log::info "docker: уже установлен, пропускаю"
+    return 0
+  fi
+
+  if os::is_wsl; then
+    local docker_wsl_mode
+    docker::_ask_wsl_mode
+    if [ "$docker_wsl_mode" = "desktop" ]; then
+      docker::_print_wsl_desktop_instructions
+      return 0
+    fi
+    log::info "docker: выбран Docker Engine внутри WSL — ставлю как на обычном Linux"
+  fi
+
+  if [ "$is_shim" = "1" ]; then
     log::warn "docker: найден podman-docker (docker — это шим от podman, не настоящий Docker Engine) — удаляю его, чтобы поставить настоящий"
     if [ "${DRY_RUN:-0}" = "1" ]; then
       log::info "[dry-run] удалил бы пакет podman-docker и установил бы docker через get.docker.com"
@@ -49,9 +119,6 @@ docker::install_engine() {
         return 1
         ;;
     esac
-  elif command -v docker >/dev/null 2>&1; then
-    log::info "docker: уже установлен, пропускаю"
-    return 0
   fi
 
   if [ "${DRY_RUN:-0}" = "1" ]; then

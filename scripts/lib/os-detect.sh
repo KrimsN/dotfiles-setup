@@ -13,6 +13,7 @@
 #   os::pkg_upgrade             — обновить индекс + накатить обновления
 #                                 установленных пакетов
 #   os::pkg_install <pkg...>    — установить пакеты
+#   os::is_wsl                  — запущены ли мы под WSL (0 — да)
 
 set -euo pipefail
 
@@ -36,6 +37,18 @@ sudo() {
     return 1
   fi
   command sudo "$@"
+}
+
+# Детект WSL: /proc/sys/kernel/osrelease на WSL1/WSL2 содержит
+# "microsoft" (регистр отличается между версиями ядра), WSL_DISTRO_NAME
+# — переменная окружения, которую выставляет сам WSL в интерактивной
+# сессии, но не гарантирована в неинтерактивных вызовах (cron внутри
+# WSL, `bash -c` из Windows) — поэтому проверяем оба признака.
+os::is_wsl() {
+  if [ -n "${WSL_DISTRO_NAME:-}" ]; then
+    return 0
+  fi
+  [ -r /proc/sys/kernel/osrelease ] && grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null
 }
 
 os::detect() {

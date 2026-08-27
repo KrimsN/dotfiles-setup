@@ -20,8 +20,8 @@
 (ставится всё). `DOTFILES_MODULES="base zsh ..."` задаёт список модулей
 без интерактива вообще (для автоматизации/CI) — сами модули внутри себя
 независимо читают свои собственные env-переопределения
-(`ZSH_DEFAULT_SHELL`, `DOCKER_ADD_USER_TO_GROUP`), install.sh их не
-трогает и не дублирует.
+(`ZSH_DEFAULT_SHELL`, `DOCKER_ADD_USER_TO_GROUP`, `DOCKER_WSL_MODE`),
+install.sh их не трогает и не дублирует.
 
 ## root-safe `sudo`
 
