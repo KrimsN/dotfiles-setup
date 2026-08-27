@@ -13,6 +13,16 @@
   стоит, иначе падают на `ls -lah`/`ls -a`.
 - `ls`/`ll`/`la` → `eza --icons`/`eza -lah --icons`/`eza -a --icons` —
   условный, только если `eza` уже установлен.
+- `dvinit [layout]` — создать `.envrc` в текущем каталоге (если его ещё
+  нет) со строкой `layout <layout>` и слоями `dotenv_if_exists` (`.env`,
+  `.env.local`, `.env.$USER`), затем сразу выполнить `direnv allow`.
+  Без аргумента угадывает layout по файлам проекта:
+  `pyproject.toml`/`uv.lock` → `uv` (наш `layout_uv` из
+  `~/.config/direnv/direnvrc`, ставится модулем `cli-tools`), `go.mod` →
+  `go`, `package.json` → `node`, иначе тоже `uv`. Существующий `.envrc`
+  не перезаписывает — только выполняет `direnv allow`. Требует
+  установленного `direnv` (модуль `cli-tools`), иначе печатает ошибку и
+  ничего не делает.
 
 Не ставит никаких пакетов, только сам механизм подключения — тот же
 паттерн, что у tmux-хука: снипет в `~/.config/knrc/aliases.sh`,
