@@ -111,6 +111,13 @@
       ]
     },
     {
+      "name": "ty",
+      "source_url": "https://github.com/astral-sh/ty",
+      "methods": [
+        { "type": "custom", "priority": 1, "requires": ["uv"], "comment": "ставится через `uv tool install ty` — тот же паттерн, что и ruff: изолированное окружение и единообразное обновление (`uv tool upgrade ty`) без отдельной логики распаковки бинарника", "handler": "python_tools::install_ty" }
+      ]
+    },
+    {
       "name": "rsync",
       "source_url": "https://github.com/RsyncProject/rsync",
       "methods": [

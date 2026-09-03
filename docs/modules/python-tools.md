@@ -2,7 +2,8 @@
 
 Ставит `uv` (менеджер пакетов и версий Python, написан на Rust) через
 официальный скрипт `astral.sh/uv/install.sh`, затем `ruff`
-(линтер/форматтер на Rust) через `uv tool install ruff`.
+(линтер/форматтер на Rust) и `ty` (type checker на Rust, тоже от
+astral) через `uv tool install ruff` / `uv tool install ty`.
 
 ## Миграция на диспетчер (2026-08-25)
 
@@ -20,6 +21,17 @@
 (`"handler": "python_tools::install_ruff"`). Идемпотентность и порядок
 вызова (после `localbin::ensure_path`, чтобы `uv` уже был в PATH
 текущего процесса) не изменились.
+
+## Добавление ty (2026-09-04)
+
+`ty` (type checker astral-sh, тоже на Rust) добавлен по тому же
+паттерну, что ruff: `python_tools::install_ty` в `python-tools.sh`,
+запись в `registry.json` с `"type": "custom", "handler":
+"python_tools::install_ty", "requires": ["uv"]`, вызов `pkg::install
+ty` в `python_tools::install` — после `ruff`, тоже уже после
+`localbin::ensure_path`. Без github-fallback (в отличие от ruff) —
+не проверялось, есть ли у ty публикуемые статические бинарники по
+такой же схеме, как у ruff.
 
 ## Решения пользователя
 
@@ -74,3 +86,12 @@ PATH независимо от того, выбран ли модуль python-t
 Stream 9 (в связке `base,cli-tools,extras,python-tools`, два прогона на
 идемпотентность) — везде `uv`/`ruff` ставятся на первом прогоне и
 корректно распознаются как уже установленные на втором.
+
+**После добавления ty (2026-09-04):** `base,python-tools` на Ubuntu
+24.04 через `.claude/skills/test-module/` (два прогона в одном
+контейнере). `ty` ставится на первом прогоне (`uv tool install ty`) и
+корректно распознаётся как уже установленный на втором
+(`command -v ty` через файл `$PYTHON_TOOLS_BIN_DIR/ty`), как и
+ruff/uv. Другие дистрибутивы отдельно не гонялись — изменение не
+затрагивает ветвление по `OS_FAMILY`, логика идентична уже
+протестированной для ruff.

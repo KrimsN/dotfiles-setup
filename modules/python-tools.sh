@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Установка uv (пакетный менеджер и менеджер версий Python, написан на
-# Rust) и ruff (линтер/форматтер на Rust) через `uv tool install`.
+# Rust), ruff (линтер/форматтер на Rust) и ty (type checker на Rust)
+# через `uv tool install`.
 # Не запускать напрямую — подключать через `source` после
 # scripts/lib/log.sh, scripts/lib/localbin.sh, scripts/lib/pkg-registry.sh
 # (нужны localbin::ensure_path и pkg::install).
@@ -11,9 +12,10 @@
 # не github_release::install, как остальные Rust-бинарники в
 # cli-tools.sh — решение пользователя: это способ доставки, который
 # рекомендует сам проект uv, и он умеет самообновляться через
-# `uv self update`) и ruff (`uv tool install ruff`, см.
-# python_tools::install_ruff ниже — на неё ссылается data/packages/
-# registry.json как на custom-обработчик) описаны декларативно в
+# `uv self update`), ruff (`uv tool install ruff`, см.
+# python_tools::install_ruff ниже) и ty (`uv tool install ty`, см.
+# python_tools::install_ty ниже — обе на них ссылается data/packages/
+# registry.json как на custom-обработчики) описаны декларативно в
 # data/packages/registry.json, см. docs/design/pkg-metadata-json.md.
 #
 # Отдельный toolchain Rust (rustup/cargo/rustc) не ставится — решение
@@ -57,10 +59,22 @@ python_tools::install_ruff() {
   uv tool install ruff
 }
 
+# custom-обработчик для пакета 'ty' в data/packages/registry.json —
+# тот же паттерн, что и python_tools::install_ruff выше.
+python_tools::install_ty() {
+  if command -v ty >/dev/null 2>&1 || [ -x "$PYTHON_TOOLS_BIN_DIR/ty" ]; then
+    log::info "python-tools: ty уже установлен, пропускаю"
+    return 0
+  fi
+  log::info "python-tools: устанавливаю ty через 'uv tool install'"
+  uv tool install ty
+}
+
 python_tools::install() {
   pkg::install uv
   localbin::ensure_path
   pkg::install ruff
+  pkg::install ty
   log::info "python-tools: готово."
 }
 
