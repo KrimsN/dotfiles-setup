@@ -101,7 +101,8 @@ update::run() {
   fi
 
   log::info "update: перезапускаю install.sh, чтобы подтянуть новые модули"
-  DOTFILES_DIR="$DOTFILES_DIR" exec "$DOTFILES_DIR/install.sh" "${passthrough[@]}"
+  export DOTFILES_DIR
+  exec "$DOTFILES_DIR/install.sh" "${passthrough[@]}"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
